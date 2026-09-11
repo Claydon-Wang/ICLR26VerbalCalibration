@@ -207,7 +207,9 @@ We refer to the confidence distribution before RL as the model's
 To characterize this prior, we sample 10 rollouts per question from
 Qwen3-8B~\citep{yang2025qwen3},
 Gemma4-E2B-Instruct~\citep{team2026gemma},
-OLMo3-7B-Instruct~\citep{olmo2025olmo3} on DeepScaleR-Train, and present their confidence distributions in Figure~\ref{fig:initial_confidence_prior}.
+OLMo3-7B-Instruct~\citep{olmo2025olmo3} on DeepScaleR-Train, and present their
+confidence distributions for correct and incorrect responses in
+Figure~\ref{fig:initial_confidence_prior}.
 All three models concentrate their confidence on a few high values, with fewer than 5\% of outputs below 0.5.
 These base models also assign high confidence even to incorrect responses,
 suggesting that their verbalized confidence does not reliably reflect
@@ -218,9 +220,10 @@ low-confidence samples.
 \begin{figure}[t]
     \centering
     \includegraphics[width=\linewidth]{figures/raw_training_confidence_priors_k10.pdf}
-    \caption{Confidence distributions of three representative open-source
-    LLMs on DeepScaleR. All three models concentrate probability mass near 1.
-    Fewer than 5\% of outputs have confidence below 0.5 for each model.}
+    \caption{Confidence distributions for correct and incorrect responses
+    from three base models on DeepScaleR-Train. Each distribution is
+    normalized separately. High confidence persists even when answers
+    are incorrect.}
     \label{fig:initial_confidence_prior}
 \end{figure}
 
@@ -306,7 +309,7 @@ to differences in task difficulty, and further contribute to downstream miscalib
 To characterize the calibration cost of this mismatch, we examine
 the expected Brier loss, which is minimized when confidence equals
 the conditional probability of correctness~\citep{gneiting2007strictly,damani2026beyond}.
-The following proposition quantifies how little probability mass near
+The following proposition quantifies how little probabil–ity mass near
 this optimal confidence raises the lower bound on Brier loss.
 \begin{proposition}[Brier risk under limited confidence sampling]
 \label{prop:confidence_support}
@@ -530,8 +533,8 @@ per-dataset results in Table~\ref{tab:appendix_ood_results}
         RLCR & 62.71 & 82.78 & 15.60 & 16.84 & 43.96 & 69.38 & 31.14 & 31.17 \\
         \rowcolor{calibrow} + CalibSFT & \textbf{64.70} & \textbf{86.88} & \textbf{13.48} & \textbf{10.84} & \textbf{45.71} & \textbf{71.31} & \textbf{23.24} & \textbf{18.20} \\
         \midrule
-        ReDoubt & -- & -- & -- & -- & -- & -- & -- & -- \\
-        \rowcolor{calibrow} + CalibSFT & -- & -- & -- & -- & -- & -- & -- & -- \\
+        ReDoubt & 63.08 & 81.70 & 15.94 & 18.85 & 43.71 & 69.88 & 25.07 & 23.98 \\
+        \rowcolor{calibrow} + CalibSFT & \textbf{65.14} & \textbf{87.76} & \textbf{11.18} & \textbf{10.26} & \textbf{46.34} & \textbf{75.98} & \textbf{21.52} & \textbf{18.41} \\
         \midrule
         CoCA & 61.11 & 80.59 & 17.25 & 21.75 & 43.68 & 66.79 & 26.67 & 24.12 \\
         \rowcolor{calibrow} + CalibSFT & \textbf{62.65} & \textbf{86.31} & \textbf{16.40} & \textbf{20.21} & \textbf{45.55} & \textbf{71.21} & \textbf{22.95} & \textbf{18.89} \\
@@ -910,10 +913,29 @@ We analyze the original confidence outputs before target construction.
 Valid-confidence rates are 80.57\%, 99.81\%, and 79.49\% for
 Qwen3-8B, Gemma4-E2B-Instruct, and OLMo3-7B-Instruct, respectively.
 Distribution statistics and correctness-conditional confidence means use
-valid outputs. Figure~\ref{fig:initial_confidence_prior} uses Gaussian
-smoothing with bandwidth 0.04 and reflection at zero and one;
-Confidence values are rounded to two decimal places before smoothing;
-frequency statistics use the rounded, unsmoothed values.
+valid outputs. Figure~\ref{fig:initial_confidence_prior} separates correct
+and incorrect responses, normalizing each group's density to integrate
+to one. Confidence values are rounded to two decimal places before Gaussian
+smoothing with bandwidth 0.04 and reflection at zero and one.
+Table~\ref{tab:base_confidence_prior_statistics} reports the pooled
+statistics from the rounded, unsmoothed values; Pass@1 uses all rollouts.
+
+\begin{table}[t]
+    \centering
+    \caption{Overall accuracy and confidence concentration before RL.
+    All entries are percentages; confidence statistics pool correct and
+    incorrect responses.}
+    \label{tab:base_confidence_prior_statistics}
+    \begin{tabular}{lrrr}
+        \toprule
+        Model & Pass@1 & Top-3 mass & Confidence $<0.5$ \\
+        \midrule
+        Qwen3-8B & 62.01 & 93.94 & 0.61 \\
+        Gemma4-E2B & 54.99 & 91.06 & 1.64 \\
+        OLMo3-7B & 48.72 & 65.30 & 4.90 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
 
 \subsection{Confidence Sampling During RL}
 \label{sec:motivation_training_statistics}
