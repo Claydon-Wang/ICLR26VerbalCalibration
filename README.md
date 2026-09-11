@@ -29,4 +29,4 @@ git commit -m "Update manuscript"
 git push
 ```
 
-仓库包含 LaTeX 源码、`reference.bib`、模板文件、`figures/`、`exp/` 中的实验记录及论文 PDF。编译临时文件由 `.gitignore` 排除。
+仓库包含 LaTeX 源码、`reference.bib`、模板文件、`figures/` 及论文 PDF。实验记录统一放在上级目录的 [`aaa_research/iclr/exp/`](../../exp/)。编译临时文件由 `.gitignore` 排除。

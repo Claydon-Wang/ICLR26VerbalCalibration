@@ -196,20 +196,20 @@ higher confidence than incorrect ones.
 \section{Motivation}
 \label{sec:motivation}
 
-Confidence-aware RL typically optimizes calibration rewards on responses sampled
-from LLMs~\citep{damani2026beyond}.
-To investigate whether LLMs can learn calibrated confidence estimates through RL,
-we analyze how their confidence distributions change during training.
+Confidence-aware RL methods typically add a calibration reward
+computed from sampled responses~\citep{xu2024sayself,damani2026beyond,ma2026decoupling,yang2026scaling}.
+Since this reward acts on whatever confidence values the policy already
+samples, we first characterize the model's confidence distribution before
+RL, then examine how RL changes it during training.
 
 \paragraph{Confidence priors concentrate on a few high values.}
 We refer to the confidence distribution before RL as the model's
 \emph{confidence prior}.
 To characterize this prior, we sample 10 rollouts per question from
-Qwen3-8B~\citep{yang2025qwen3},
-Gemma4-E2B-Instruct~\citep{team2026gemma},
-OLMo3-7B-Instruct~\citep{olmo2025olmo3} on DeepScaleR-Train, and present their
-confidence distributions for correct and incorrect responses in
-Figure~\ref{fig:initial_confidence_prior}.
+Qwen3-8B~\citep{yang2025qwen3}, Gemma4-E2B-Instruct~\citep{team2026gemma},
+and OLMo3-7B-Instruct~\citep{olmo2025olmo3} on DeepScaleR-Train.
+Figure~\ref{fig:initial_confidence_prior} presents their confidence
+distributions for correct and incorrect responses.
 All three models concentrate their confidence on a few high values, with fewer than 5\% of outputs below 0.5.
 These base models also assign high confidence even to incorrect responses,
 suggesting that their verbalized confidence does not reliably reflect
@@ -222,21 +222,23 @@ low-confidence samples.
     \includegraphics[width=\linewidth]{figures/raw_training_confidence_priors_k10.pdf}
     \caption{Confidence distributions for correct and incorrect responses
     from three base models on DeepScaleR-Train. Each distribution is
-    normalized separately. High confidence persists even when answers
-    are incorrect.}
+    normalized separately; annotations report overall Pass@1, Top-3 mass,
+    and the proportion of confidence outputs below 0.5, pooling both groups.
+    High confidence persists even when answers are incorrect.}
     \label{fig:initial_confidence_prior}
 \end{figure}
 
-\paragraph{RL improves calibration but confidence exploration remains limited.}
+\paragraph{RL improves calibration but confidence concentration persists.}
 To examine whether calibration-aware RL overcomes this concentration,
 we train Qwen3-8B with RLCR.
-As shown in Figure~\ref{fig:rlcr_training_calibration}(a), RLCR successfully reduces Brier loss during training, demonstrating its
-effectiveness in improving calibration.
+As shown in Figure~\ref{fig:rlcr_training_calibration}(a), RLCR reduces
+Brier loss over training, showing that the calibration reward can be
+optimized.
 However, Figure~\ref{fig:rlcr_training_calibration}(b) shows that
 the model continues to sample a small set of confidence values
-for each question.
-We provide more detailed empirical evidence in
-Appendix~\ref{sec:motivation_training_statistics}.
+for each question, with correspondingly low confidence token entropy
+throughout training (see Appendix~\ref{sec:motivation_training_statistics}
+for further training statistics).
 
 \begin{figure}[t]
     \centering
@@ -261,27 +263,29 @@ Appendix~\ref{sec:motivation_training_statistics}.
 \end{figure}
 
 To better understand why this concentration persists during training,
-we formulate confidence generation as action selection under a softmax
-policy and examine how sampling probabilities affect the expected
-gradient~\citep{garg2022alternate}.
+we formulate confidence generation as action selection under a
+softmax policy~\citep{garg2022alternate}. Since the LLM decodes each
+confidence value autoregressively, the induced distribution over the
+finite set of confidence values is itself a softmax distribution.
 \begin{proposition}[Policy gradients under confidence concentration]
 \label{prop:confidence_saturation}
-Fix prediction information $h$ and a finite set of confidence actions
-$\{c_1,\ldots,c_K\}\subseteq[0,1]$.
-Let $\pi_i=\Pr(C=c_i\mid h)=\exp(\ell_i)/\sum_{j=1}^K\exp(\ell_j)$.
-For $Z\in\{0,1\}$ indicating answer correctness, define the fixed
-expected reward $r_i=-\mathbb E[(c_i-Z)^2\mid h]$.
-Let $J_h(\ell)=\sum_i\pi_i r_i$ and
-$\Delta_h=\max_i r_i-\min_i r_i$. Then
+Given a question $x$ and a finite set of confidence actions
+$\{c_1,\ldots,c_K\}\subseteq[0,1]$,
+let $\ell=(\ell_1,\ldots,\ell_K)$ denote the policy's logits for these
+actions and $\pi_i=\Pr(C=c_i\mid x)=\exp(\ell_i)/\sum_{j=1}^K\exp(\ell_j)$.
+For $Z\in\{0,1\}$ indicating the correctness of a rollout sampled for
+$x$, define the fixed expected reward $r_i=-\mathbb E[(c_i-Z)^2\mid x]$.
+Let $J_x(\ell)=\sum_i\pi_i r_i$ and
+$\Delta_x=\max_i r_i-\min_i r_i$. Then
 \begin{equation}
-    \frac{\partial J_h}{\partial\ell_i}=\pi_i(r_i-J_h),
+    \frac{\partial J_x}{\partial\ell_i}=\pi_i(r_i-J_x),
     \qquad
-    \left|\frac{\partial J_h}{\partial\ell_i}\right|
-    \leq\pi_i\Delta_h.
+    \left|\frac{\partial J_x}{\partial\ell_i}\right|
+    \leq\pi_i\Delta_x.
 \end{equation}
 If $\pi_k=1-\varepsilon$ for some $k\in\{1,\ldots,K\}$, then
 \begin{equation}
-    \|\nabla_\ell J_h\|_1\leq 2\varepsilon\Delta_h.
+    \|\nabla_\ell J_x\|_1\leq 2\varepsilon\Delta_x.
 \end{equation}
 \end{proposition}
 Proposition~\ref{prop:confidence_saturation} shows that a rarely sampled
@@ -289,68 +293,82 @@ confidence value has a small expected logit gradient even when choosing it
 would improve the expected reward. As the confidence distribution approaches
 a single choice, the entire logit gradient vanishes, including when that
 choice is suboptimal.
-This provides a mechanism by which an initially concentrated confidence
-distribution can impede exploration of better-calibrated outputs.
+This identifies how an initially concentrated confidence
+distribution can impede exploration of better-calibrated outputs, which
+is consistent with the persistently low distinct-value count and
+confidence token entropy observed in
+Figure~\ref{fig:rlcr_training_calibration}(b).
 We provide the proof in Appendix~\ref{sec:confidence_saturation_proof}.
 
 \paragraph{Persistent confidence concentration hinders downstream calibration.}
 To examine the implications of persistent confidence concentration
 for downstream calibration, we evaluate the final RLCR checkpoint
-on two datasets of contrasting difficulty including Math500 and MinervaMath.
+on two datasets of contrasting difficulty: Math500 and MinervaMath.
 As shown in Figure~\ref{fig:rlcr_test_calibration}, the post-RL model
-underestimates its accuracy on Math500 but is markedly overconfident
-on MinervaMath.
-Despite the large accuracy gap, the mean confidence remains similar
-across the two tasks, with the three most frequent values accounting
-for about 70\% of outputs on each tasks.
-This suggests that confidence estimates do not sufficiently adapt
-to differences in task difficulty, and further contribute to downstream miscalibration.
+underestimates its accuracy on Math500 (90.5\% Pass@1 vs.\ 84.5\% mean
+confidence) but is markedly overconfident on MinervaMath (36.7\% Pass@1
+vs.\ 74.8\% mean confidence).
+Despite a 53.8-point gap in Pass@1 between the two tasks, mean
+confidence differs by only 9.7 points. The three most frequent values
+still account for 82.25\% and 69.49\% of outputs on Math500 and
+MinervaMath, respectively.
+The same small set of confidence values therefore appears to persist
+across tasks of different difficulty, failing to calibrate downstream tasks.
 
-To characterize the calibration cost of this mismatch, we examine
+To characterize the cost of this miscalibration, we examine
 the expected Brier loss, which is minimized when confidence equals
 the conditional probability of correctness~\citep{gneiting2007strictly,damani2026beyond}.
-The following proposition quantifies how little probabil–ity mass near
-this optimal confidence raises the lower bound on Brier loss.
-\begin{proposition}[Brier risk under limited confidence sampling]
+\begin{proposition}[Brier risk under limited confidence support]
 \label{prop:confidence_support}
 Let $Z\in\{0,1\}$ indicate answer correctness and let $C\in[0,1]$
 denote the predicted confidence.
-Given prediction information $h$, define
-$p_h=\Pr(Z=1\mid h)$.
-Assume that $C$ and $Z$ are conditionally independent given $h$.
+Given a question $x$, define
+$p_x=\Pr(Z=1\mid x)$.
+Assume that $C$ and $Z$ are conditionally independent given $x$,
+consistent with the limited discrimination between correct and
+incorrect responses observed in Figure~\ref{fig:initial_confidence_prior}.
 For any $\delta>0$, let
-$m_\delta(h)=\Pr(|C-p_h|<\delta\mid h)$.
+$m_\delta(x)=\Pr(|C-p_x|<\delta\mid x)$.
 Then
 \begin{equation}
-    \mathbb E[(C-Z)^2\mid h]
-    \geq p_h(1-p_h)+\delta^2\bigl(1-m_\delta(h)\bigr).
+    \mathbb E[(C-Z)^2\mid x]
+    \geq p_x(1-p_x)+\delta^2\bigl(1-m_\delta(x)\bigr).
 \end{equation}
 \end{proposition}
-For a fixed neighborhood of $p_h$, Proposition~\ref{prop:confidence_support}
-shows that the lower bound on Brier loss increases as the probability
-of sampling confidence within that neighborhood decreases.
-This suggests that confidence concentration can hinder calibration
+Proposition~\ref{prop:confidence_support} shows that the lower bound
+on Brier loss increases as the probability that confidence falls
+near $p_x$ decreases.
+Therefore, confidence concentration can hinder calibration
 when it leaves little probability mass near the probability of correctness.
-We provide the proof, the restricted-support case, and a finite-sampling
-analysis in
-Appendix~\ref{sec:confidence_support_proof}.
+In Appendix~\ref{sec:confidence_support_proof}, we provide the detailed proof,
+extend the bound to a restricted confidence support, and show that
+limited support similarly raises the expected error of the closest
+of $G$ sampled confidence values.
 
 \section{Method}
 
-To improve the confidence prior before RL, we introduce CalibSFT, a
-supervised fine-tuning stage based on the model's own responses.
-CalibSFT assigns each response a confidence target from correctness feedback
-and balances the data across target values, providing direct supervision
-for confidence values that are rarely sampled.
-It learns confidence from both correct and incorrect responses, while
-using correct responses to supervise reasoning and answer generation.
+In our previous analysis, we showed that confidence concentration
+persists during RL, since rarely sampled confidence values receive
+little gradient signal. This persistent concentration further
+hinders downstream calibration.
+To address this problem, our key idea is to supervise the confidence
+prior directly before RL, so that these values are learned rather
+than left for RL to explore.
+We propose CalibSFT, a supervised fine-tuning stage for confidence
+initialization. For each question, CalibSFT samples multiple
+responses from the base model and assigns each a confidence
+target that combines the question's success rate with the
+response's own correctness.
+It learns confidence from both correct and incorrect
+responses, while using correct responses to supervise reasoning and
+answer generation.
 
-\subsection{Rollout-Derived Confidence Targets}
+\subsection{Proper-Scoring Confidence Targets}
 
 Binary correctness provides feedback on a particular answer, while repeated
 rollouts reveal how reliably the model solves the question.
 For each training prompt $x_g$, we sample $K_{\mathrm{SFT}}$ responses from
-the initial model and use the task verifier to obtain correctness labels
+the base model and use the task verifier to obtain correctness labels
 $z_{g,i}\in\{0,1\}$.
 Following the group--instance target used in DCPO~\citep{ma2026decoupling},
 we combine the success rate across these responses with each response's
@@ -362,17 +380,17 @@ correctness to construct SFT targets:
     c^{\star}_{g,i}=\lambda q_g+(1-\lambda)z_{g,i}.
 \end{equation}
 The shared term $q_g$ lets targets vary with the question's difficulty for
-the initial model, while $z_{g,i}$ distinguishes correct and incorrect
+the base model, while $z_{g,i}$ distinguishes correct and incorrect
 responses within the group. The mixing weight $\lambda\in[0,1]$ controls
 their relative contributions; we use $\lambda=0.5$.
 
 Combining these signals also reduces the variability of binary supervision.
 Both $q_g$ and $z_{g,i}$ estimate the question's success probability under
-the initial policy. We quantify how mixing them preserves this expectation
+the base model. We quantify how mixing them preserves this expectation
 and how the number of rollouts affects the target variance.
 \begin{proposition}[Mean and variance of confidence targets]
 \label{prop:confidence_target_moments}
-Fix a prompt $x_g$ and a sampling policy, and let
+Given a prompt $x_g$ and a sampling policy, let
 $Z_{g,1},\ldots,Z_{g,K}$ be conditionally independent
 $\operatorname{Bernoulli}(p_g)$ correctness labels, where
 $p_g=\Pr(Z=1\mid x_g)$ and $K=K_{\mathrm{SFT}}$.
@@ -534,7 +552,7 @@ per-dataset results in Table~\ref{tab:appendix_ood_results}
         \rowcolor{calibrow} + CalibSFT & \textbf{64.70} & \textbf{86.88} & \textbf{13.48} & \textbf{10.84} & \textbf{45.71} & \textbf{71.31} & \textbf{23.24} & \textbf{18.20} \\
         \midrule
         ReDoubt & 63.08 & 81.70 & 15.94 & 18.85 & 43.71 & 69.88 & 25.07 & 23.98 \\
-        \rowcolor{calibrow} + CalibSFT & \textbf{65.14} & \textbf{87.76} & \textbf{11.18} & \textbf{10.26} & \textbf{46.34} & \textbf{75.98} & \textbf{21.52} & \textbf{18.41} \\
+        \rowcolor{calibrow} + CalibSFT & \textbf{64.99} & \textbf{88.33} & \textbf{13.00} & \textbf{16.20} & \textbf{45.55} & \textbf{73.93} & \textbf{22.42} & \textbf{18.89} \\
         \midrule
         CoCA & 61.11 & 80.59 & 17.25 & 21.75 & 43.68 & 66.79 & 26.67 & 24.12 \\
         \rowcolor{calibrow} + CalibSFT & \textbf{62.65} & \textbf{86.31} & \textbf{16.40} & \textbf{20.21} & \textbf{45.55} & \textbf{71.21} & \textbf{22.95} & \textbf{18.89} \\
@@ -974,91 +992,99 @@ of 45.16\%.
 \subsection{Proof of Proposition~\ref{prop:confidence_saturation}}
 \label{sec:confidence_saturation_proof}
 \begin{proof}
-We fix $h$ and the expected rewards $r_i$, and differentiate with respect
+We fix $x$ and the expected rewards $r_i$, and differentiate with respect
 to the confidence logits.
 The softmax derivative is
 $\partial\pi_j/\partial\ell_i=\pi_j(\mathbf 1\{j=i\}-\pi_i)$.
 It follows that
 \begin{align}
-    \frac{\partial J_h}{\partial\ell_i}
+    \frac{\partial J_x}{\partial\ell_i}
     &=\sum_j r_j\pi_j(\mathbf 1\{j=i\}-\pi_i) \\
-    &=\pi_i(r_i-J_h).
+    &=\pi_i(r_i-J_x).
 \end{align}
-Since $J_h$ is a convex combination of the $r_i$ values,
-$|r_i-J_h|\leq\Delta_h$, which gives the coordinate-wise bound.
+Since $J_x$ is a convex combination of the $r_i$ values,
+$|r_i-J_x|\leq\Delta_x$, which gives the coordinate-wise bound.
 If $\pi_k=1-\varepsilon$, then
 \begin{equation}
-    |r_k-J_h|
+    |r_k-J_x|
     =\left|\sum_{i\ne k}\pi_i(r_k-r_i)\right|
-    \leq\varepsilon\Delta_h.
+    \leq\varepsilon\Delta_x.
 \end{equation}
 Consequently,
 \begin{align}
-    \|\nabla_\ell J_h\|_1
-    &=\pi_k|r_k-J_h|+\sum_{i\ne k}\pi_i|r_i-J_h| \\
-    &\leq(1-\varepsilon)\varepsilon\Delta_h
-      +\varepsilon\Delta_h \\
-    &\leq 2\varepsilon\Delta_h.
+    \|\nabla_\ell J_x\|_1
+    &=\pi_k|r_k-J_x|+\sum_{i\ne k}\pi_i|r_i-J_x| \\
+    &\leq(1-\varepsilon)\varepsilon\Delta_x
+      +\varepsilon\Delta_x \\
+    &\leq 2\varepsilon\Delta_x.
 \end{align}
 \end{proof}
 The gradient is the expectation of the likelihood-ratio estimator
 $R\nabla_\ell\log\pi_I$, where $I\sim\pi$ and
 $R=-(c_I-Z)^2$, with $Z$ drawn from its fixed conditional distribution
-given $h$, independently of $I$.
-A baseline depending only on $h$ leaves this expectation unchanged.
+given $x$, independently of $I$.
+This matches RLCR's reward $Z-(c_I-Z)^2$ (Preliminaries) up to the
+term $Z$, which does not depend on $c_I$. Assuming $C\perp Z\mid x$
+as in Proposition~\ref{prop:confidence_support}, this term
+contributes an $\ell$-independent additive constant to $J_x$ that
+does not affect this gradient.
+A baseline depending only on $x$ leaves this expectation unchanged.
 
 \subsection{Proof of Proposition~\ref{prop:confidence_support}}
 \label{sec:confidence_support_proof}
 \begin{proof}
 Conditional independence gives
-$\mathbb E[Z-p_h\mid h,C]=0$. Expanding the square therefore yields
+$\mathbb E[Z-p_x\mid x,C]=0$. Expanding the square therefore yields
 \begin{align}
-    \mathbb E[(C-Z)^2\mid h]
-    &=\mathbb E[(Z-p_h)^2\mid h]
-      +\mathbb E[(C-p_h)^2\mid h] \\
-    &=p_h(1-p_h)+\mathbb E[(C-p_h)^2\mid h].
+    \mathbb E[(C-Z)^2\mid x]
+    &=\mathbb E[(Z-p_x)^2\mid x]
+      +\mathbb E[(C-p_x)^2\mid x] \\
+    &=p_x(1-p_x)+\mathbb E[(C-p_x)^2\mid x].
 \end{align}
 For any $\delta>0$, the second term satisfies
 \begin{align}
-    \mathbb E[(C-Z)^2\mid h]-p_h(1-p_h)
-    &=\mathbb E[(C-p_h)^2\mid h] \\
-    &\geq\delta^2\Pr(|C-p_h|\geq\delta\mid h) \\
-    &=\delta^2(1-m_\delta(h)).
+    \mathbb E[(C-Z)^2\mid x]-p_x(1-p_x)
+    &=\mathbb E[(C-p_x)^2\mid x] \\
+    &\geq\delta^2\Pr(|C-p_x|\geq\delta\mid x) \\
+    &=\delta^2(1-m_\delta(x)).
 \end{align}
-Thus, assigning little probability mass near $p_h$ incurs excess Brier
+Thus, assigning little probability mass near $p_x$ incurs excess Brier
 loss even when confidence values in that neighborhood remain possible.
 \end{proof}
 
 \paragraph{Restricted confidence support.}
-As a special case, suppose $\Pr(C\in S_h\mid h)=1$ for a nonempty
-set $S_h\subseteq[0,1]$, and define
-$d_h=\operatorname{dist}(p_h,S_h)=\inf_{c\in S_h}|c-p_h|$.
-If $d_h>0$, then $m_{d_h}(h)=0$, and
-Proposition~\ref{prop:confidence_support} with $\delta=d_h$ gives
+As a special case, suppose $\Pr(C\in S_x\mid x)=1$ for a nonempty
+set $S_x\subseteq[0,1]$, and define
+$d_x=\operatorname{dist}(p_x,S_x)=\inf_{c\in S_x}|c-p_x|$.
+If $d_x>0$, then $m_{d_x}(x)=0$, and
+Proposition~\ref{prop:confidence_support} with $\delta=d_x$ gives
 \begin{equation}
-    \mathbb E[(C-Z)^2\mid h]
-    \geq p_h(1-p_h)+\operatorname{dist}(p_h,S_h)^2.
+    \mathbb E[(C-Z)^2\mid x]
+    \geq p_x(1-p_x)+\operatorname{dist}(p_x,S_x)^2.
 \end{equation}
-For $d_h=0$, the same bound follows directly from the decomposition above.
-If $S_h$ is closed, a predictor that always outputs a nearest point in
-$S_h$ attains the bound.
+For $d_x=0$, the same bound follows directly from the decomposition above.
+If $S_x$ is closed, a predictor that always outputs a nearest point in
+$S_x$ attains the bound.
+Confidence values are effectively drawn from a small discrete set
+throughout this paper (Figure~\ref{fig:initial_confidence_prior}), so
+$\operatorname{dist}(p_x,S_x)$ measures how far the nearest available
+value falls from $p_x$, translating the observed concentration
+directly into excess Brier risk.
 
 \paragraph{Finite-sampling limitation.}
-Fix the policy and prediction information $h$, and draw $G$ independent
+Fix the policy and a question $x$, and draw $G$ independent
 confidence samples $C_1,\ldots,C_G$ from its conditional distribution.
 Each confidence sample lies outside
-$\{c:|c-p_h|<\delta\}$ with probability $1-m_\delta(h)$.
-Independence gives the probability $(1-m_\delta(h))^G$ that all $G$
-samples lie outside. On that event, even the sample closest to $p_h$
+$\{c:|c-p_x|<\delta\}$ with probability $1-m_\delta(x)$.
+Independence gives the probability $(1-m_\delta(x))^G$ that all $G$
+samples lie outside. On that event, even the sample closest to $p_x$
 has squared error at least $\delta^2$, so
 \begin{equation}
-    \mathbb E\!\left[\min_{i\leq G}(C_i-p_h)^2\mid h\right]
-    \geq\delta^2(1-m_\delta(h))^G.
+    \mathbb E\!\left[\min_{i\leq G}(C_i-p_x)^2\mid x\right]
+    \geq\delta^2(1-m_\delta(x))^G.
 \end{equation}
-Here $p_h$ is conditional on the information used for a particular
-prediction, rather than the prompt's average success rate across different
-answers. The sampling statement fixes this information and the policy;
-it does not assume that support remains unchanged during RL.
+This statement fixes the policy and the question $x$; it does not
+assume that the confidence support remains unchanged during RL.
 
 \subsection{Additional Models and Sampling Settings}
 \textbf{[TODO:]} Add the motivation analysis for additional model families and
