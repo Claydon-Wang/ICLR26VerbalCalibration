@@ -334,49 +334,92 @@ Appendix~\ref{sec:confidence_support_proof}.
 
 \section{Method}
 
-To mitigate these limitations, we introduce CalibSFT, an offline supervised
-initialization for post-answer verbalized confidence with two components.
-It constructs rollout-derived confidence targets
-with a balanced target distribution, then applies outcome-conditional segment
-supervision. Compared with the Base initialization, it changes only this offline
-initialization; the downstream confidence-RL objective and training recipe are held
-fixed.
+To improve the confidence prior before RL, we introduce CalibSFT, a
+supervised fine-tuning stage based on the model's own responses.
+CalibSFT assigns each response a confidence target from correctness feedback
+and balances the data across target values, providing direct supervision
+for confidence values that are rarely sampled.
+It learns confidence from both correct and incorrect responses, while
+using correct responses to supervise reasoning and answer generation.
 
 \subsection{Rollout-Derived Confidence Targets}
 
-For each training prompt $x_g$, where $g$ indexes prompt groups, we sample
-$K_{\mathrm{SFT}}$ completions indexed by $i$ and obtain binary correctness
-labels $z_{g,i}$ from the task verifier. We compute the group success rate from
-all sampled completions before filtering, and assign a target to each retained
-rollout:
+Binary correctness provides feedback on a particular answer, while repeated
+rollouts reveal how reliably the model solves the question.
+For each training prompt $x_g$, we sample $K_{\mathrm{SFT}}$ responses from
+the initial model and use the task verifier to obtain correctness labels
+$z_{g,i}\in\{0,1\}$.
+Following the group--instance target used in DCPO~\citep{ma2026decoupling},
+we combine the success rate across these responses with each response's
+correctness to construct SFT targets:
 \begin{equation}
+\label{eq:calibsft_target}
     q_g=\frac{1}{K_{\mathrm{SFT}}}\sum_{i=1}^{K_{\mathrm{SFT}}}z_{g,i},
     \qquad
     c^{\star}_{g,i}=\lambda q_g+(1-\lambda)z_{g,i}.
 \end{equation}
-The group statistic is the empirical success rate under the initial policy and
-decoding protocol, whereas $z_{g,i}$ records the outcome of the realized answer.
-Thus $\lambda$ controls the interpolation between prompt-level and instance-level
-supervision; we use $\lambda=0.5$ in the main configuration. Invalid or
-low-quality completions are removed before they enter the SFT set; this filtering
-does not recompute $q_g$. Replacing the confidence suffix with
-$c^{\star}_{g,i}$ yields a target-rendered completion that retains the sampled
-reasoning and answer. In the main probability format, the target is separately
-rendered as a two-decimal value in the trailing \texttt{<confidence>} tag.
+The shared term $q_g$ lets targets vary with the question's difficulty for
+the initial model, while $z_{g,i}$ distinguishes correct and incorrect
+responses within the group. The mixing weight $\lambda\in[0,1]$ controls
+their relative contributions; we use $\lambda=0.5$.
 
-We balance the target distribution at training time: a per-epoch sampler groups
-examples using a six-decimal key of the numeric target and samples the same number
-from each nonempty bucket, using the smallest bucket as the default per-target
-count. For runs using offline materialization, the same rule is applied when
-constructing the balanced split. This exposes the model to the available
-confidence targets without inheriting their raw rollout-frequency skew.
+Combining these signals also reduces the variability of binary supervision.
+Both $q_g$ and $z_{g,i}$ estimate the question's success probability under
+the initial policy. We quantify how mixing them preserves this expectation
+and how the number of rollouts affects the target variance.
+\begin{proposition}[Mean and variance of confidence targets]
+\label{prop:confidence_target_moments}
+Fix a prompt $x_g$ and a sampling policy, and let
+$Z_{g,1},\ldots,Z_{g,K}$ be conditionally independent
+$\operatorname{Bernoulli}(p_g)$ correctness labels, where
+$p_g=\Pr(Z=1\mid x_g)$ and $K=K_{\mathrm{SFT}}$.
+Define $Q_g=K^{-1}\sum_{j=1}^K Z_{g,j}$ and
+$T_{g,i}=\lambda Q_g+(1-\lambda)Z_{g,i}$ for $\lambda\in[0,1]$.
+Then
+\begin{equation}
+\begin{aligned}
+    \mathbb E[T_{g,i}\mid x_g]&=p_g, \\
+    \operatorname{Var}(T_{g,i}\mid x_g)
+    &=p_g(1-p_g)\left[\frac{1}{K}
+      +(1-\lambda)^2\left(1-\frac{1}{K}\right)\right].
+\end{aligned}
+\end{equation}
+The confidence prediction that minimizes the expected squared loss
+given $x_g$ is therefore
+\begin{equation}
+    \arg\min_{a\in[0,1]}\mathbb E[(a-T_{g,i})^2\mid x_g]=p_g.
+\end{equation}
+\end{proposition}
+Proposition~\ref{prop:confidence_target_moments} shows that mixing preserves
+the prompt-level optimum of Brier loss~\citep{gneiting2007strictly}.
+The target variance is no greater than that of an individual correctness label.
+Increasing the rollout count stabilizes the group success rate, while
+$\lambda<1$ preserves the distinction between correct and incorrect responses.
+The proof and extension to general proper scoring rules are provided in
+Appendix~\ref{sec:confidence_target_proof}.
+
+We replace each retained response's confidence with $c^{\star}_{g,i}$,
+preserving its reasoning and answer. To give each available target equal
+representation during SFT, we group responses by target value and sample
+the same number from each nonempty group. This gives infrequent targets
+the same training exposure as common ones.
+We provide filtering, formatting, and sampling details in
+Appendix~\ref{sec:calibsft_data_details}.
 
 \subsection{Outcome-Conditional Supervision}
 
-For a target-rendered completion $\widetilde o$, let $M$ denote its
-reasoning-and-answer token positions and $C$ its trailing confidence positions.
-CalibSFT uses token-mean cross-entropy with separate averages for the two
-segments:
+The constructed data include incorrect responses paired with lower
+confidence targets. We retain these examples to teach the model to express
+uncertainty about its own errors. We use their reasoning and answers as context and
+supervise the confidence that follows. Correct responses receive supervision
+on the entire completion, reinforcing successful reasoning and answer
+generation alongside confidence prediction.
+
+Formally, let $\widetilde o$ denote a response with its confidence replaced
+by the constructed target, and let $M$ and $C$ denote its reasoning-and-answer
+and confidence token positions, respectively.
+We average the token loss within each segment before combining the two
+supervision terms:
 \begin{equation}
 \begin{split}
     \mathcal L_{\mathrm{CalibSFT}}={}&(1-\beta)\,\mathbb E_{\mathrm{correct}}
@@ -387,10 +430,13 @@ segments:
     \log\pi_\theta(\widetilde o_t\mid x,\widetilde o_{<t})\right].
 \end{split}
 \end{equation}
-The first expectation is over retained correct rollouts and the second over all
-retained rollouts. A correct rollout therefore trains both its reasoning/answer
-and confidence segments, whereas an incorrect rollout trains only its confidence
-suffix. We use $\beta=0.5$ in the main configuration.
+The first expectation is over correct responses in the balanced SFT data,
+and the second is over all responses in that data.
+Separate segment averages prevent the longer reasoning sequences from
+dominating the loss by token count, and $\beta$ controls the weight of
+confidence supervision. We use $\beta=0.5$.
+The resulting checkpoint initializes confidence-aware RL, with each
+downstream method using its original reward and training configuration.
 
 \section{Experiments}
 
@@ -996,6 +1042,87 @@ it does not assume that support remains unchanged during RL.
 \textbf{[TODO:]} Add the motivation analysis for additional model families and
 sampling settings once those evaluation runs are complete.
 
+\section{Properties of the Mixed Confidence Target}
+\label{sec:confidence_target_proof}
+We analyze the unrounded targets under the original sampling distribution,
+before response filtering and target balancing.
+The random variables $Q_g$ and $T_{g,i}$ correspond to the observed
+$q_g$ and $c^{\star}_{g,i}$ in Equation~\ref{eq:calibsft_target}.
+
+\begin{proof}[Proof of Proposition~\ref{prop:confidence_target_moments}]
+Fix $x_g$ and write $v_g=p_g(1-p_g)$.
+Conditional independence gives
+\begin{equation}
+    \mathbb E[Q_g\mid x_g]=\mathbb E[Z_{g,i}\mid x_g]=p_g,
+    \qquad \operatorname{Var}(Q_g\mid x_g)=\frac{v_g}{K}.
+\end{equation}
+Since $Z_{g,i}$ is included in $Q_g$, their conditional covariance is
+\begin{equation}
+    \operatorname{Cov}(Q_g,Z_{g,i}\mid x_g)=\frac{v_g}{K}.
+\end{equation}
+Linearity of expectation gives $\mathbb E[T_{g,i}\mid x_g]=p_g$.
+Expanding the variance yields
+\begin{align}
+    \operatorname{Var}(T_{g,i}\mid x_g)
+    &=\lambda^2\frac{v_g}{K}+(1-\lambda)^2v_g
+      +2\lambda(1-\lambda)\frac{v_g}{K} \\
+    &=v_g\left[\frac{1}{K}
+      +(1-\lambda)^2\left(1-\frac{1}{K}\right)\right].
+\end{align}
+For a fixed prediction $a$,
+\begin{equation}
+    \mathbb E[(a-T_{g,i})^2\mid x_g]
+    =(a-p_g)^2+\operatorname{Var}(T_{g,i}\mid x_g).
+\end{equation}
+The variance is independent of $a$, so the unique minimizer is $a=p_g$.
+\end{proof}
+
+\paragraph{Connection to proper scoring rules.}
+Let $\ell(a,z)$ be a binary strictly proper scoring loss, so that
+$p\ell(a,1)+(1-p)\ell(a,0)$ is uniquely minimized at $a=p$.
+Extend it to a target $t\in[0,1]$ by
+$\bar\ell(a,t)=t\ell(a,1)+(1-t)\ell(a,0)$.
+For any fixed $a$ for which these losses are finite, unbiasedness implies
+\begin{equation}
+    \mathbb E[\bar\ell(a,T_{g,i})\mid x_g]
+    =p_g\ell(a,1)+(1-p_g)\ell(a,0).
+\end{equation}
+Thus the mixture, the group average, and an individual correctness label
+induce the same expected scoring loss for a prediction based on $x_g$.
+For Brier loss, $\bar\ell(a,t)=(a-t)^2+t(1-t)$; the second term does
+not depend on $a$, giving the minimizer stated in the proposition.
+This argument also applies to binary logarithmic loss through the same
+extension~\citep{gneiting2007strictly}.
+
+\paragraph{Effect of the rollout count and mixing weight.}
+At $\lambda=0$, the target is the binary label with variance $v_g$;
+at $\lambda=1$, it is the group average with variance $v_g/K$.
+For $0<\lambda<1$, its variance lies between these values and decreases
+with $K$. For a fixed $\lambda<1$, the variance approaches
+$(1-\lambda)^2v_g$ as $K$ increases, reflecting the retained contribution
+of the individual outcome.
+Within any observed group,
+$T_{g,i}-T_{g,j}=(1-\lambda)(Z_{g,i}-Z_{g,j})$.
+The mixing weight therefore controls the tradeoff between lower target
+variance and separation of correct and incorrect responses.
+
+\paragraph{Conditioning on the generated response.}
+The proposition concerns the success probability $p_g$ before observing
+a particular response. To make the effect of conditioning explicit, let
+$h_i$ include $x_g$ and information from response $i$, and define
+$p_{h_i}=\Pr(Z_{g,i}=1\mid h_i)$.
+If the other rollouts are independent of $h_i$ conditional on $x_g$, then
+\begin{equation}
+    \mathbb E[T_{g,i}\mid h_i]
+    =\left(1-\lambda+\frac{\lambda}{K}\right)p_{h_i}
+     +\lambda\left(1-\frac{1}{K}\right)p_g.
+\end{equation}
+The target thus shrinks the response-conditional probability toward the
+prompt's success probability. The proposition justifies the mean and
+variance of this supervision signal under the original rollout distribution;
+it does not establish response-conditional calibration after target balancing
+and token-level SFT. Those effects are evaluated empirically.
+
 \section{Implementation Details}
 \label{sec:detailed_setup}
 
@@ -1015,6 +1142,20 @@ selective completion mask with $\beta=0.5$: correct rollouts supervise both the
 reasoning/answer and confidence segments, whereas incorrect rollouts supervise
 only the confidence segment. Generally, we train CalibSFT for 180 steps with a
 learning rate of $2\times10^{-6}$ and 10 warm-up steps.
+
+\paragraph{SFT data construction.}
+\label{sec:calibsft_data_details}
+We compute each prompt's success rate $q_g$ from all sampled responses
+before filtering. Invalid or low-quality responses are then removed from
+the SFT data, with $q_g$ kept fixed. For each retained response, we replace
+the confidence suffix with its target while preserving the sampled reasoning
+and answer. In the main probability format, the target is rendered to two
+decimal places in the trailing \texttt{<confidence>} tag.
+For balanced sampling, we group examples by the numeric target rounded to
+six decimal places and sample the same number from every nonempty group,
+using the smallest group size as the default count. We apply this rule
+either through a per-epoch sampler or when constructing an offline balanced
+split.
 
 \paragraph{Confidence-aware RL.}
 For downstream RL, each prompt group contains 8 sampled responses, with each
