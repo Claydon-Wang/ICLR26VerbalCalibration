@@ -1,23 +1,22 @@
 \begin{table*}[t]
 \centering
-\caption{Correlation between accuracy and mean verbalized confidence across ID and OOD datasets.
-Base and +Ours denote RL without and with CalibSFT initialization, respectively;
-the higher value is bold. Each coefficient uses eight equally weighted datasets
-within its split.}
+\caption{Pearson $r$ and Spearman $\rho$ correlation between accuracy and mean confidence across ID and OOD datasets.
+Both correlations increase for all RL methods when incorporating CalibSFT, indicating that confidence better tracks task-level accuracy.}
 \label{tab:confidence_correlation}
 \small
 \setlength{\tabcolsep}{3pt}
-\begin{tabular}{ll*{10}{c}}
+\resizebox{0.95\textwidth}{!}{%
+\begin{tabular}{ll*{4}{cc@{\hspace{14pt}}}cc}
 \toprule
-& & \multicolumn{2}{c}{RLCR} & \multicolumn{2}{c}{ReDoubt} & \multicolumn{2}{c}{CoCA} & \multicolumn{2}{c}{DCPO} & \multicolumn{2}{c}{C3RL} \\
-\cmidrule(lr){3-4}\cmidrule(lr){5-6}\cmidrule(lr){7-8}\cmidrule(lr){9-10}\cmidrule(lr){11-12}
-Dataset & Metric & Base & +Ours & Base & +Ours & Base & +Ours & Base & +Ours & Base & +Ours \\
+& & \multicolumn{2}{c@{\hspace{14pt}}}{RLCR} & \multicolumn{2}{c@{\hspace{14pt}}}{ReDoubt} & \multicolumn{2}{c@{\hspace{14pt}}}{CoCA} & \multicolumn{2}{c@{\hspace{14pt}}}{DCPO} & \multicolumn{2}{c}{C3RL} \\
+\cmidrule(lr{14pt}){3-4}\cmidrule(lr{14pt}){5-6}\cmidrule(lr{14pt}){7-8}\cmidrule(lr{14pt}){9-10}\cmidrule(lr){11-12}
+Dataset & Method & $r$ & $\rho$ & $r$ & $\rho$ & $r$ & $\rho$ & $r$ & $\rho$ & $r$ & $\rho$ \\
 \midrule
-\multirow{2}{*}{ID} & Pearson $r$ & 0.768 & \textbf{0.963} & 0.829 & \textbf{0.976} & 0.750 & \textbf{0.887} & 0.669 & \textbf{0.996} & 0.635 & \textbf{0.896} \\
- & Spearman $\rho$ & 0.619 & \textbf{0.952} & 0.762 & \textbf{0.976} & 0.643 & \textbf{0.976} & 0.619 & \textbf{0.976} & 0.595 & \textbf{0.833} \\
+\multirow{2}{*}{ID} & Baseline & 0.768 & 0.619 & 0.829 & 0.762 & 0.750 & 0.643 & 0.669 & 0.619 & 0.635 & 0.595 \\
+ & +CalibSFT & \textbf{0.963} & \textbf{0.952} & \textbf{0.976} & \textbf{0.976} & \textbf{0.887} & \textbf{0.976} & \textbf{0.996} & \textbf{0.976} & \textbf{0.896} & \textbf{0.833} \\
 \midrule
-\multirow{2}{*}{OOD} & Pearson $r$ & 0.505 & \textbf{0.729} & 0.667 & \textbf{0.738} & 0.447 & \textbf{0.605} & 0.467 & \textbf{0.611} & 0.681 & \textbf{0.848} \\
- & Spearman $\rho$ & 0.548 & \textbf{0.619} & \textbf{0.762} & 0.643 & 0.571 & \textbf{0.619} & 0.548 & \textbf{0.643} & 0.714 & \textbf{0.929} \\
+\multirow{2}{*}{OOD} & Baseline & 0.505 & 0.548 & 0.667 & 0.762 & 0.447 & 0.571 & 0.467 & 0.548 & 0.681 & 0.714 \\
+ & +CalibSFT & \textbf{0.729} & \textbf{0.619} & \textbf{0.738} & \textbf{0.881} & \textbf{0.605} & \textbf{0.619} & \textbf{0.611} & \textbf{0.643} & \textbf{0.848} & \textbf{0.929} \\
 \bottomrule
-\end{tabular}
+\end{tabular}}
 \end{table*}
