@@ -260,7 +260,7 @@ optimized.
 However, Figure~\ref{fig:rlcr_training_calibration}(b) shows that
 the model continues to sample a small set of confidence values per
 question, and confidence token entropy stays low throughout training
-(see Appendix~\ref{sec:motivation_training_statistics}
+(see Appendix~\ref{sec:training_dynamics}
 for training curves across RL objectives).
 
 To better understand why this concentration persists during training,
@@ -318,8 +318,8 @@ different difficulty, so confidence no longer tracks the model's accuracy
 on each task.
 
 To characterize the cost of this miscalibration, we bound the expected
-Brier loss $\mathbb E[(C-Z)^2\mid x]$, which is minimized at $C=p_x$,
-where $p_x=\Pr(Z=1\mid x)$~\citep{gneiting2007strictly,damani2026beyond}.
+Brier loss $\mathbb E[(C-Z)^2\mid x]$ ~\citep{gneiting2007strictly}, which is minimized at $C=p_x$,
+where $p_x=\Pr(Z=1\mid x)$.
 \begin{proposition}[Brier risk under limited confidence support]
 \label{prop:confidence_support}
 Assume that $C$ and $Z$ are conditionally independent given $x$,
@@ -520,24 +520,6 @@ single node with eight NVIDIA A100 GPUs.  We report our hyperparameter setting a
 
 \subsection{Overall Results}
 \label{sec:overall_results}
-
-% \paragraph{CalibSFT alone improves calibration but not OOD discrimination.}
-% Base and RLVR are both overconfident on the two splits, and optimizing answer
-% correctness alone does not change the miscalibration. In contrast, CalibSFT successfully mitigates the overconfidence on the mathematical benchmarks, where ECE drops from 36.26 to 14.82 and AUROC exceeds both baselines. On the general reasoning benchmarks, ECE similarly drops from 46.94 to
-% 24.16, but AUROC does not improve, falling from 65.71 to 61.38, so the
-% gain in discrimination does not transfer to OOD benchmarks.
-%
-%
-% \paragraph{CalibSFT consistently benefits diverse confidence-aware RL methods.}
-% As shown in Table~\ref{tab:main_results}, initializing RL with CalibSFT
-% reduces Brier score and ECE and increases AUROC on both mathematical and general
-% reasoning benchmarks for all RL baselines.
-% We provide detailed per-dataset results in Table~\ref{tab:appendix_id_results} and Table~\ref{tab:appendix_ood_results}
-% (Appendix~\ref{sec:per_dataset_results}). For example, CalibSFT reduces
-% DCPO's ECE from 44.59 to 20.25 while increasing its AUROC from 64.19 to 74.73 on MinervaMath.
-% CalibSFT achieves these gains while also improving answer accuracy, with average
-% Pass@1 gains of 1.19 and 1.49 points across the five RL methods. These results
-% support its use as a plug-and-play initialization for better confidence-aware RL.
 
 \paragraph{CalibSFT consistently benefits diverse confidence-aware RL methods.}
  As shown in Table~\ref{tab:main_results}, initializing RL from CalibSFT
@@ -860,45 +842,6 @@ Section~\ref{sec:motivation} shows are concentrated on a few high values and sta
 concentrated while the calibration reward is optimized. In this paper, we analyze this
 prior and propose CalibSFT, an SFT stage that initializes verbalized confidence before
 confidence-aware RL.
-
-\section{The Analysis of the Motivation}
-\label{sec:motivation_training_statistics}
-In Section~\ref{sec:motivation}, we observe that confidence stays
-concentrated on a few values while RLCR optimizes its calibration reward.
-To verify that this behavior is not specific to one objective, we further
-train Qwen3-8B with CoCA~\citep{li2026confidence} and
-DCPO~\citep{ma2026decoupling} under the same setup and track the same
-quantities.
-
-As shown in Figure~\ref{fig:motivation_training_dynamics}, we observe the
-same phenomenon as in Section~\ref{sec:motivation}. Between the first and
-last ten steps, Brier loss falls for RLCR (0.266 to 0.224) and CoCA
-(0.255 to 0.221) and stays nearly flat for DCPO (0.246 to 0.241), so each
-objective either improves calibration or holds it steady. Confidence
-support does not follow. The mean number of distinct confidence values
-within a group of eight responses never exceeds 5.3 at any step of any
-run, and confidence token entropy ends below where it started in all three
-runs. Therefore, none of the three objectives moves the model away from
-sampling a few confidence values per question, which extends the
-observation reported for RLCR in Section~\ref{sec:motivation} to all three
-objectives.
-
-\begin{figure*}[t]
-    \centering
-    \includegraphics[width=\textwidth]{figures/training_dynamics_all.pdf}
-    \caption{Training dynamics of confidence calibration and support for
-    Base$\to$RLCR, Base$\to$CoCA, and Base$\to$DCPO. The top row shows Brier
-    loss; the bottom row shows distinct confidence values per question
-    (blue, left axis) and confidence token entropy (orange, right axis).
-    Faint curves show per-step measurements and bold curves centered
-    five-step means. Statistics use the groups retained by the corresponding
-    training run, so the sampled questions and responses change across steps.}
-    \label{fig:motivation_training_dynamics}
-\end{figure*}
-
-% \subsection{Additional Models and Sampling Settings}
-% \textbf{[TODO:]} Add the motivation analysis for additional model families and
-% sampling settings once those evaluation runs are complete.
 
 \section{Theoretical Analysis}
 
@@ -1268,36 +1211,96 @@ CalibSFT sets the scale of confidence, and RL sharpens its ranking outside the t
 
 
 
+\subsection{Training Dynamics}
+\label{sec:training_dynamics}
+In Section~\ref{sec:motivation}, we observe that confidence stays
+concentrated on a few values while RLCR optimizes its calibration reward.
+To verify that this behavior is not specific to one objective, we further
+train Qwen3-8B with CoCA~\citep{li2026confidence} and
+DCPO~\citep{ma2026decoupling} under the same setup and track the same
+quantities. We also initialize all three objectives from CalibSFT and
+compare the same quantities under both initializations.
+
+As shown in Figures~\ref{fig:training_dynamics_calibration}
+and~\ref{fig:training_dynamics_support}, we observe the
+same phenomenon as in Section~\ref{sec:motivation}. Between the first and
+last ten steps, Brier loss falls for RLCR (0.266 to 0.224) and CoCA
+(0.255 to 0.221) and stays nearly flat for DCPO (0.246 to 0.241), so each
+objective either improves calibration or holds it steady. Confidence
+support does not follow. The mean number of distinct confidence values
+within a group of eight responses never exceeds 5.3 at any step of the
+three base-initialized runs, and confidence token entropy ends below where
+it started in all three runs. Therefore, none of the three objectives moves
+the model away from sampling a few confidence values per question, which
+extends the observation reported for RLCR in Section~\ref{sec:motivation}
+to all three objectives.
+
+Initializing from CalibSFT broadens confidence exploration throughout
+training. Averaged over training steps, the number of distinct confidence
+values per question rises from 3.3--3.9 to 6.3--7.1, and confidence token
+entropy rises from 0.16--0.27 to 0.61--0.90. This gap holds at every step:
+each CalibSFT-initialized run samples at least 5.39 distinct values per
+question, above the maximum of 5.25 reached by any base-initialized run.
+Brier loss of each CalibSFT-initialized run stays below that of its
+base-initialized counterpart for 88\% to 94\% of training steps in
+five-step means, while accuracy remains nearly unchanged, with its average
+over training differing by at most 0.002.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\linewidth]{figures/training_dynamics_calibration.pdf}
+    \caption{Brier loss (top) and accuracy (bottom) during training of RLCR,
+    CoCA, and DCPO with and without CalibSFT initialization. Faint curves show
+    per-step measurements and bold curves centered five-step means. Statistics
+    use the groups retained by the corresponding training run, so the sampled
+    questions and responses change across steps.}
+    \label{fig:training_dynamics_calibration}
+\end{figure}
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\linewidth]{figures/training_dynamics_support.pdf}
+    \caption{Distinct confidence values per question (left axis) and
+    confidence token entropy (right axis) during training of RLCR, CoCA, and
+    DCPO without (top) and with (bottom) CalibSFT initialization. Each axis
+    uses the same range in all panels. Curves and statistics follow
+    Figure~\ref{fig:training_dynamics_calibration}.}
+    \label{fig:training_dynamics_support}
+\end{figure}
+
+% \subsection{Additional Models and Sampling Settings}
+% \textbf{[TODO:]} Add the motivation analysis for additional model families and
+% sampling settings once those evaluation runs are complete.
+
+\textbf{[TODO:]} Report the mean and standard deviation of evaluation
+metrics across training seeds.
+
 \subsection{Ablation Studies}
 \label{sec:ablation_studies}
 
 \paragraph{Confidence target construction.}
 \label{sec:target_construction_setup}
 
-\begin{wraptable}{r}{0.5\textwidth}
+\begin{table}[t]
     \centering
-    \vspace{-13pt}
     \caption{Training-target distribution (\%) over ten equal-width bins in the confidence target ablation.}
     \label{tab:training_target_distribution}
     \footnotesize
-    \setlength{\tabcolsep}{2.5pt}
-    \begin{tabular}{crrrrr}
+    \setlength{\tabcolsep}{3pt}
+    \resizebox{\linewidth}{!}{%
+    \begin{tabular}{lrrrrrrrrrr}
         \toprule
-        Interval & CSFT & UaIT & SaySelf & LoVeC & CalibSFT \\
+        Target & $[0.0, 0.1]$ & $(0.1, 0.2]$ & $(0.2, 0.3]$ & $(0.3, 0.4]$ & $(0.4, 0.5]$
+        & $(0.5, 0.6]$ & $(0.6, 0.7]$ & $(0.7, 0.8]$ & $(0.8, 0.9]$ & $(0.9, 1.0]$ \\
         \midrule
-        $[0.0, 0.1]$ & 11.11 & 0.00 & 22.07 & 27.33 & 11.11 \\
-        $(0.1, 0.2]$ & 11.11 & 0.00 & 14.41 & 3.78 & 11.11 \\
-        $(0.2, 0.3]$ & 11.11 & 0.00 & 11.93 & 8.17 & 11.11 \\
-        $(0.3, 0.4]$ & 11.11 & 0.00 & 10.22 & 0.20 & 11.11 \\
-        $(0.4, 0.5]$ & 11.11 & 0.00 & 9.04 & 1.37 & 5.56 \\
-        $(0.5, 0.6]$ & 11.11 & 0.00 & 8.26 & 0.63 & 11.11 \\
-        $(0.6, 0.7]$ & 11.11 & 6.48 & 8.89 & 0.22 & 11.11 \\
-        $(0.7, 0.8]$ & 11.11 & 56.06 & 6.63 & 1.54 & 11.11 \\
-        $(0.8, 0.9]$ & 11.11 & 35.15 & 5.56 & 15.80 & 11.11 \\
-        $(0.9, 1.0]$ & 0.00 & 2.31 & 3.00 & 40.96 & 5.56 \\
+        CSFT & 11.11 & 11.11 & 11.11 & 11.11 & 11.11 & 11.11 & 11.11 & 11.11 & 11.11 & 0.00 \\
+        UaIT & 0.00 & 0.00 & 0.00 & 0.00 & 0.00 & 0.00 & 6.48 & 56.06 & 35.15 & 2.31 \\
+        SaySelf & 22.07 & 14.41 & 11.93 & 10.22 & 9.04 & 8.26 & 8.89 & 6.63 & 5.56 & 3.00 \\
+        LoVeC & 27.33 & 3.78 & 8.17 & 0.20 & 1.37 & 0.63 & 0.22 & 1.54 & 15.80 & 40.96 \\
+        \rowcolor{calibrow} CalibSFT & 11.11 & 11.11 & 11.11 & 11.11 & 5.56 & 11.11 & 11.11 & 11.11 & 11.11 & 5.56 \\
         \bottomrule
-    \end{tabular}
-\end{wraptable}
+    \end{tabular}}
+\end{table}
 
 The construction of confidence targets in CalibSFT is inspired by proper scoring rules, which serve as a foundation for calibration.
 To verify the effectiveness of this target design, we compare CalibSFT
@@ -1468,11 +1471,6 @@ calibration, and confidence diversity, giving a well-calibrated starting point f
 confidence-aware RL.
 
 
-
-\subsection{Training Stability}
-\label{sec:training_stability}
-\textbf{[TODO:]} Show training curves and report the mean and standard
-deviation of evaluation metrics across training seeds.
 
 \subsection{Results under Additional Metrics}
 \label{sec:confidence_distributions}
