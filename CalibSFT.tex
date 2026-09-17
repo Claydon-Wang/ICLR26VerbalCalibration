@@ -82,19 +82,20 @@ citecolor=mydarkgreen]{hyperref}
 \maketitle
 
 \begin{abstract}
-Reasoning large language models (LLMs) frequently suffer from overconfidence when verbalizing their confidence.
-While confidence-aware reinforcement learning (RL) offers a promising way to optimize calibration, it relies solely on self-sampled responses and is thus constrained by the pre-RL confidence distribution---termed the \emph{confidence prior}. 
+Large reasoning language models (LRMs) frequently suffer from overconfidence when verbalizing their confidence.
+Confidence-aware reinforcement learning (RL) offers a promising way to optimize calibration; however, it relies only on self-sampled responses and is thus constrained by the pre-RL confidence distribution---termed the \emph{confidence prior}. 
 We reveal that off-the-shelf LLMs exhibit a confidence prior heavily concentrated on a few high values, and this concentration persists throughout RL and limits confidence exploration.
 Theoretically, we prove that this concentration restricts policy gradient updates for rarely sampled confidence values and inflates the lower bound on expected Brier risk.
 To address this limitation, we propose \textbf{CalibSFT}, a supervised fine-tuning stage that shapes a calibrated confidence prior with broad support before confidence-aware RL.
 Specifically, CalibSFT derives confidence targets from model rollouts by combining question-level success rates with response-level correctness, which provably preserves the optimal confidence under any strictly proper scoring rule. 
-To avoid concentrated supervision, \textsc{CalibSFT} samples an equal number of responses for each target value. It then applies correctness-conditional supervision, supervising confidence on all responses while restricting reasoning and answers to correct ones, so that incorrect responses teach the model to express low confidence without teaching it incorrect solutions.
-Across 16 benchmarks spanning mathematics and general reasoning, initializing with CalibSFT consistently reduces calibration errors across five confidence-aware RL algorithms (e.g., halving OOD ECE from 32.41\% to 17.31\% for DCPO) and improves discrimination without sacrificing accuracy.
+To avoid concentrated supervision, \textsc{CalibSFT} samples an equal number of responses for each target value. 
+It then applies correctness-conditional supervision, supervising confidence on all responses while restricting reasoning and answers to correct ones, so that incorrect responses teach the model to express low confidence rather than teach it incorrect solutions.
+Across 16 benchmarks, including mathematics and general reasoning, initializing with CalibSFT consistently reduces calibration errors across five confidence-aware RL algorithms (e.g., halving OOD ECE from 32.41\% to 17.31\% for DCPO) and improves discrimination without sacrificing accuracy.
 \end{abstract}
 
 \section{Introduction}
 
-Reasoning large language models (LLMs) have made substantial progress on complex tasks such as mathematics and coding~\citep{guo2025deepseek,yang2025qwen3}.
+Large Reasoning language models (LRMs) have made substantial progress on complex tasks such as mathematics and coding~\citep{guo2025deepseek,yang2025qwen3}.
 However, these gains in accuracy do not imply reliable confidence: reasoning LLMs often remain overconfident in incorrect answers~\citep{mei2025reasoning}.
 A reliable model should therefore report \emph{calibrated} confidence~\citep{guo2017calibration}, which matches the probability that its answer is correct.
 Calibrated confidence indicates when an answer can be trusted, which enables applications such as hallucination detection~\citep{wu2026mitigating} and adaptive test-time scaling~\citep{yang2026scaling}.
@@ -127,7 +128,7 @@ Furthermore, CalibSFT remains effective across different confidence formats and 
 
 Our contributions are summarized as follows:
 \begin{enumerate}[leftmargin=*,itemsep=1pt,topsep=1pt]
-    \item We systematically identify that reasoning LLMs exhibit a concentrated confidence prior that persists throughout confidence-aware RL training. Theoretically, we prove that such concentration bounds policy gradient exploration and inflates the lower bound on expected Brier loss.
+    \item We systematically identify that reasoning LLMs exhibit a concentrated confidence prior that persists throughout confidence-aware RL training. Theoretically, we prove that such a concentration bounds policy gradient exploration and inflates the lower bound on expected Brier loss.
     \item We propose CalibSFT, a supervised fine-tuning stage that constructs confidence targets from the model's own responses to provide a calibrated confidence prior for confidence-aware RL.
     \item Extensive experiments across 16 benchmarks and 5 confidence-aware RL methods demonstrate that CalibSFT alleviates confidence concentration, boosting calibration and discrimination without compromising task accuracy.
 \end{enumerate}
@@ -212,7 +213,7 @@ However, calibration alone does not imply discrimination. For example,
 assigning every response a constant confidence equal to the overall
 accuracy yields zero ECE while giving correct and incorrect responses
 identical scores~\citep{eusebi2026reading}. We therefore also report
-\textbf{AUROC}, a threshold-agnagnostic measure of how well confidence
+\textbf{AUROC}, a threshold-agnostic measure of how well confidence
 discriminates between correct and incorrect responses.
 
 \section{Motivation}
