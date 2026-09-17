@@ -77,28 +77,65 @@
 linkcolor=mydarkred,
 citecolor=mydarkgreen]{hyperref}
 
-
 \begin{document}
-
 
 \maketitle
 
 \begin{abstract}
-The abstract paragraph should be indented 1/2~inch (3~picas) on both left and qaqqa
-
+Reasoning large language models (LLMs) frequently suffer from overconfidence when verbalizing their confidence.
+While confidence-aware reinforcement learning (RL) offers a promising way to optimize calibration, it relies solely on self-sampled responses and is thus constrained by the pre-RL confidence distribution---termed the \emph{confidence prior}. 
+We reveal that off-the-shelf LLMs exhibit a confidence prior heavily concentrated on a few high values, and this concentration persists throughout RL and limits confidence exploration.
+Theoretically, we prove that this concentration restricts policy gradient updates for rarely sampled confidence values and inflates the lower bound on expected Brier risk.
+To address this limitation, we propose \textbf{CalibSFT}, a supervised fine-tuning stage that shapes a calibrated confidence prior with broad support before confidence-aware RL.
+Specifically, CalibSFT derives confidence targets from model rollouts by combining question-level success rates with response-level correctness, which provably preserves the optimal confidence under any strictly proper scoring rule. 
+To avoid concentrated supervision, \textsc{CalibSFT} samples an equal number of responses for each target value. It then applies correctness-conditional supervision, supervising confidence on all responses while restricting reasoning and answers to correct ones, so that incorrect responses teach the model to express low confidence without teaching it incorrect solutions.
+Across 16 benchmarks spanning mathematics and general reasoning, initializing with CalibSFT consistently reduces calibration errors across five confidence-aware RL algorithms (e.g., halving OOD ECE from 32.41\% to 17.31\% for DCPO) and improves discrimination without sacrificing accuracy.
 \end{abstract}
 
 \section{Introduction}
 
-Reasoning large language models (LLMs) increasingly solve complex problems by generating a reasoning trajectory followed by the answer~\citep{yang2025qwen3}. 
-Despite these advances, the answer accuracy alone does not ensure reliable uncertainty estimates: a model may produce plausible reasoning trajectory yet remain overconfident in an incorrect answer~\citep{geng2024survey, liu2025uncertainty}. 
-In principle, confidence calibration requires the reported confidence to reflect the empirical probability that the answer is correct, which in turn enables applications such as hallucination detection \citep{wu2026mitigating} and adaptive test-time scaling \citep{yang2026scaling}.
+Reasoning large language models (LLMs) have made substantial progress on complex tasks such as mathematics and coding~\citep{guo2025deepseek,yang2025qwen3}.
+However, these gains in accuracy do not imply reliable confidence: reasoning LLMs often remain overconfident in incorrect answers~\citep{mei2025reasoning}.
+A reliable model should therefore report \emph{calibrated} confidence~\citep{guo2017calibration}, which matches the probability that its answer is correct.
+Calibrated confidence indicates when an answer can be trusted, which enables applications such as hallucination detection~\citep{wu2026mitigating} and adaptive test-time scaling~\citep{yang2026scaling}.
 
-Verbalized confidence obtains such an answer-level score by asking the model to emit a numerical probability with its final answer. Unlike confidence estimators based on token probabilities, hidden states, or repeated sampling~\citep{luo2026your,srey2026signals,wang2026calibrating}, it can be produced in a single black-box generation~\citep{xiong2024can}. 
+Beyond estimates derived from token probabilities, internal representations, or sampling consistency~\citep{luo2026your,srey2026signals,kuhn2023semantic}, a model can directly verbalize its confidence alongside its final answer.
+Unlike these alternatives, which rely on model internals or repeated sampling, verbalized confidence requires only a single black-box generation.
+However, off-the-shelf LLMs typically verbalize miscalibrated confidence that concentrates on a few high values regardless of accuracy~\citep{xiong2024can,mei2025reasoning,cacioli2026saturation}.
+To address this issue, post-training approaches calibrate verbalized confidence via either supervised fine-tuning (SFT) on constructed confidence targets~\citep{xu2024sayself,jang2025verbalized} or confidence-aware reinforcement learning (RL) guided by calibration rewards~\citep{damani2026beyond,ma2026decoupling}.
+
+Among these approaches, confidence-aware RL is particularly promising owing to its superior generalization beyond the training distribution~\citep{chu2025sft}.
+However, because confidence-aware RL learns exclusively from self-sampled responses, it hinges on the confidence distribution before RL, which we term the \emph{confidence prior}.
+In practice, this prior typically concentrates on a narrow set of high values across both correct and incorrect responses (Figure~\ref{fig:initial_confidence_prior}).
+Although confidence-aware RL explicitly penalizes miscalibration, this concentration persists throughout policy optimization and limits the exploration of diverse confidence values (Figure~\ref{fig:rlcr_training_calibration}).
+As we theoretically analyze in Section~\ref{sec:motivation}, the policy gradient for each confidence value scales with its sampling probability, so rarely sampled values are barely updated.
+Such concentration in turn raises the lower bound on the expected Brier loss and thus limits calibration after RL.
+Empirically, post-RL confidence does not track accuracy across tasks: mean confidence on MinervaMath is only 9.7\% lower than on Math500 even though Pass@1 is 53.8\% lower (Figure~\ref{fig:rlcr_test_calibration}).
+
+Motivated by the miscalibration, we propose \textbf{CalibSFT}, a supervised fine-tuning stage that shapes a calibrated confidence prior with broad support before confidence-aware RL.
+Specifically, for each training question, CalibSFT samples multiple responses from the base model and assigns each a confidence target that balances the question-level success rate with response-level correctness.
+We further prove that this mixed target preserves the optimal confidence attained under correctness labels for any strictly proper scoring rule.
+To avoid concentrated supervision, CalibSFT employs target-balanced sampling, drawing a uniform number of responses across all target confidence values.
+During fine-tuning, it supervises confidence on all responses while restricting reasoning and answers to correct ones, so that incorrect responses teach the model to express low confidence without learning incorrect solutions.
+Since CalibSFT only reshapes the confidence prior without altering the RL objectives, it can be seamlessly applied to any confidence-aware RL framework.
+
+We extensively evaluate CalibSFT across 16 benchmarks, spanning both in-distribution mathematical reasoning and out-of-distribution general reasoning across diverse difficulty levels.
+Across five confidence-aware RL methods, initializing with CalibSFT consistently outperforms base-model initialization in both calibration and discrimination without compromising task accuracy (see Table~\ref{tab:main_results}).
+For example, it reduces the out-of-distribution ECE of DCPO from 32.41\% to 17.31\% and improves its AUROC from 68.13\% to 72.75\%.
+Consistent with our analysis, CalibSFT mitigates confidence concentration after RL (Figure~\ref{fig:confidence_distribution}) and strengthens the correlation between task-level confidence and accuracy (Table~\ref{tab:confidence_correlation}).
+Furthermore, CalibSFT remains effective across different confidence formats and model families (see Tables~\ref{tab:format_calibsft} and~\ref{tab:gemma_calibsft}).
+
+Our contributions are summarized as follows:
+\begin{enumerate}[leftmargin=*,itemsep=1pt,topsep=1pt]
+    \item We systematically identify that reasoning LLMs exhibit a concentrated confidence prior that persists throughout confidence-aware RL training. Theoretically, we prove that such concentration bounds policy gradient exploration and inflates the lower bound on expected Brier loss.
+    \item We propose CalibSFT, a supervised fine-tuning stage that constructs confidence targets from the model's own responses to provide a calibrated confidence prior for confidence-aware RL.
+    \item Extensive experiments across 16 benchmarks and 5 confidence-aware RL methods demonstrate that CalibSFT alleviates confidence concentration, boosting calibration and discrimination without compromising task accuracy.
+\end{enumerate}
+
 
 \section{Preliminaries}
 
-\subsection{Verbalized Confidence and Confidence-Aware RL}
+\subsection{Verbalized Confidence for Reasoning LLMs}
 
 In this work, we study the calibration of verbalized numerical confidence in reasoning language models~\citep{tian2023just,xiong2024can}. Given a question $x$, the LLM
 $\pi_\theta$ generates a response $o=(r,a,c)$, where $r$ is a reasoning
@@ -175,7 +212,7 @@ However, calibration alone does not imply discrimination. For example,
 assigning every response a constant confidence equal to the overall
 accuracy yields zero ECE while giving correct and incorrect responses
 identical scores~\citep{eusebi2026reading}. We therefore also report
-\textbf{AUROC}, a threshold-independent measure of how well confidence
+\textbf{AUROC}, a threshold-agnagnostic measure of how well confidence
 discriminates between correct and incorrect responses.
 
 \section{Motivation}
@@ -585,6 +622,18 @@ These results indicate that CalibSFT helps the model assign higher confidence to
     \label{fig:confidence_distribution}
 \end{figure}
 
+\begin{wrapfigure}{r}{0.58\textwidth}
+    \centering
+    \vspace{-20pt}
+    \includegraphics[width=\linewidth]{figures/aime2026_accuracy_ece.pdf}
+    \vspace{-15pt}
+    \caption{Accuracy ($\uparrow$) and ECE ($\downarrow$) on AIME'26 across token budgets
+    for RLCR. CalibSFT initialization yields lower ECE across all budgets while maintaining accuracy.}
+    \label{fig:reasoning_budget}
+    % \vspace{-10pt}
+\end{wrapfigure}
+
+
 \paragraph{CalibSFT mitigates downstream confidence concentration after RL.}
 Prior work observes that confidence estimates often concentrate on a few dominant values even after confidence-aware RL training~\citep{wang2026process,yang2026scaling}. 
 To examine whether CalibSFT initialization alleviates this concentration, we compare RLCR, CoCA, and DCPO on MinervaMath, with and without CalibSFT.
@@ -615,16 +664,6 @@ Linguistic (low / medium / high) & 17.71 & \textbf{15.90} & 73.56 & \textbf{79.5
 \end{tabular}}
 \end{table*}
 
-\begin{wrapfigure}{r}{0.58\textwidth}
-    \centering
-    \vspace{-20pt}
-    \includegraphics[width=\linewidth]{figures/aime2026_accuracy_ece.pdf}
-    \vspace{-15pt}
-    \caption{Accuracy ($\uparrow$) and ECE ($\downarrow$) on AIME'26 across token budgets
-    for RLCR. CalibSFT initialization yields lower ECE across all budgets while maintaining accuracy.}
-    \label{fig:reasoning_budget}
-    % \vspace{-10pt}
-\end{wrapfigure}
 
 
 \begin{table*}[t]
