@@ -60,6 +60,7 @@
 
 \definecolor{mydarkred}{rgb}{0.6,0,0}
 \definecolor{mydarkgreen}{rgb}{0,0.6,0}
+\definecolor{mydarkblue}{rgb}{0.1,0.2,0.55}
 \definecolor{calibrow}{gray}{0.94}
 \newcommand{\fix}{\marginpar{FIX}}
 \newcommand{\new}{\marginpar{NEW}}
@@ -92,6 +93,9 @@ To avoid concentrated supervision, \textsc{CalibSFT} samples an equal number of 
 It then applies correctness-conditional supervision, supervising confidence on all responses while restricting reasoning and answers to correct ones, so that incorrect responses teach the model to express low confidence rather than teach it incorrect solutions.
 Across 16 benchmarks, including mathematics and general reasoning, initializing with CalibSFT consistently reduces calibration errors across five confidence-aware RL algorithms (e.g., halving OOD ECE from 32.41\% to 17.31\% for DCPO) and improves discrimination without sacrificing accuracy.
 \end{abstract}
+
+% Hide main-text sections from the table of contents; only the appendix is listed.
+\addtocontents{toc}{\protect\setcounter{tocdepth}{-10}}
 
 \section{Introduction}
 
@@ -138,7 +142,7 @@ Our contributions are summarized as follows:
 
 \subsection{Verbalized Confidence for Reasoning LLMs}
 
-In this work, we study the calibration of verbalized numerical confidence in reasoning language models~\citep{tian2023just,xiong2024can}. Given a question $x$, the LLM
+In this work, we study the calibration of verbalized numerical confidence in large reasoning language models~\citep{tian2023just,xiong2024can}. Given a question $x$, the LLM
 $\pi_\theta$ generates a response $o=(r,a,c)$, where $r$ is a reasoning
 trace, $a$ is an answer, and $c\in[0,1]$ is a post-answer confidence
 value that represents the model's estimated probability that $a$ is
@@ -514,7 +518,7 @@ correctness, \textbf{AUROC} for ranking correct responses above incorrect respon
 \paragraph{Implementation details.}
 During evaluation, we use temperature 0.6 and sample 32 responses per problem
 for the AIME benchmarks and 4 responses per problem for all other benchmarks. All experiments are conducted on a
-single node with eight NVIDIA A100 GPUs.  We report our hyperparameter setting and training details in Appendix~\ref{sec:detailed_setup}.
+single node with eight NVIDIA B20Z GPUs.  We report our hyperparameter setting and training details in Appendix~\ref{sec:detailed_setup}.
 
 
 
@@ -663,15 +667,15 @@ Linguistic (low / medium / high) & 17.71 & \textbf{15.90} & 73.56 & \textbf{79.5
         Metric & Method & Math500 & Olympiad & Minerva
         & DROP & HotpotQA & NQOpen & Average \\
         \midrule
-        \multirow{2}{*}{ECE $\downarrow$} & RLCR
+         & RLCR
         & 8.09 & 22.63 & 40.72 & 19.92 & 26.41 & 38.25 & 26.00 \\
-        & +CalibSFT
+        \rowcolor{calibrow} \cellcolor{white}\multirow{-2}{*}{ECE $\downarrow$} & +CalibSFT
         & \textbf{5.44} & \textbf{12.73} & \textbf{20.74}
         & \textbf{13.30} & \textbf{13.04} & \textbf{22.77} & \textbf{14.67} \\
         \midrule
-        \multirow{2}{*}{AUROC $\uparrow$} & RLCR
+         & RLCR
         & 74.96 & 83.64 & 67.71 & 60.60 & 60.48 & 76.85 & 70.71 \\
-        & +CalibSFT
+        \rowcolor{calibrow} \cellcolor{white}\multirow{-2}{*}{AUROC $\uparrow$} & +CalibSFT
         & \textbf{80.23} & \textbf{88.20} & \textbf{71.44}
         & \textbf{65.45} & \textbf{62.66} & \textbf{77.13} & \textbf{74.69} \\
         \bottomrule
@@ -786,6 +790,12 @@ acknowledgments, including those to funding agencies, go at the end of the paper
 \bibliographystyle{iclr2027_conference}
 
 \appendix
+
+\addtocontents{toc}{\protect\setcounter{tocdepth}{2}}
+\renewcommand{\contentsname}{Appendix}
+\clearpage
+{\hypersetup{linkcolor=mydarkblue,linktoc=all}\tableofcontents}
+% \clearpage
 
 \section{Related Work}
 
@@ -1055,7 +1065,7 @@ segment. We use AdamW ($\beta_1=0.9$, $\beta_2=0.999$) with no weight decay and
 gradient-norm clipping at 1.0, a constant learning rate of $2\times10^{-6}$
 after 10 warm-up steps, and a global batch size of 256 sequences truncated to
 16{,}384 tokens. We train for 180 optimization steps, roughly 1.3 epochs over
-the balanced split, on eight A100 GPUs.
+the balanced split, on eight B20Z GPUs.
 
 \paragraph{Confidence-aware RL.}
 For downstream RL, each prompt group contains 8 sampled responses, with each
@@ -1246,7 +1256,8 @@ base-initialized counterpart for 88\% to 94\% of training steps in
 five-step means, while accuracy remains nearly unchanged, with its average
 over training differing by at most 0.002.
 
-\begin{figure}[t]
+% One float keeps Figures training_dynamics_calibration and training_dynamics_support together.
+\begin{figure}[tbp]
     \centering
     \includegraphics[width=\linewidth]{figures/training_dynamics_calibration.pdf}
     \caption{Brier loss (top) and accuracy (bottom) during training of RLCR,
@@ -1255,10 +1266,8 @@ over training differing by at most 0.002.
     use the groups retained by the corresponding training run, so the sampled
     questions and responses change across steps.}
     \label{fig:training_dynamics_calibration}
-\end{figure}
 
-\begin{figure}[t]
-    \centering
+    \vspace{1.5em}
     \includegraphics[width=\linewidth]{figures/training_dynamics_support.pdf}
     \caption{Distinct confidence values per question (left axis) and
     confidence token entropy (right axis) during training of RLCR, CoCA, and
@@ -1477,49 +1486,208 @@ confidence-aware RL.
 \textbf{[TODO:]} Report the same comparisons under three additional families of
 metrics. (i) Accuracy: Pass@$k$ in addition to Pass@1, with $k=4$ on the
 non-AIME benchmarks and $k=32$ on AIME. (ii) Calibration: MacroCE, adaptive
-ECE, AURC/EAURC, and the Brier decomposition into calibration and refinement
-terms, together with their definitions, aggregation protocols, and ECE
-sensitivity to 10, 15, and 20 bins. (iii) Confidence diversity: the number of
+ECE, and the Brier decomposition into calibration and refinement terms,
+together with their definitions, aggregation protocols, and ECE sensitivity to
+10, 15, and 20 bins. Selective answering belongs here as well: risk--coverage
+curves with AURC and E-AURC, and accuracy at matched coverage, which measure the
+same ranking as AUROC without committing to a threshold. The thresholds
+themselves, chosen with a guarantee, are studied in
+Appendix~\ref{sec:selective_risk_control}. (iii) Confidence diversity: the number of
 distinct confidence values, Top-1 and Top-3 confidence mass, confidence
 entropy, and effective number of values, reported per dataset and as ID/OOD
 averages.
 
-\subsection{Comparison with Alternative Confidence Signals}
-\textbf{[TODO:]} Compare post-answer verbalized confidence with token- or
-sequence-level probability, self-consistency, semantic consistency, and a
-hidden-state probe. Use the same generated answers whenever the signal permits,
-and report AUROC, Brier score, ECE, inference cost, and model-access
-requirements. Discuss which gains arise from CalibSFT and which arise from the
-choice of confidence signal.
+\subsection{Integration with Other Confidence Estimators}
+\label{sec:confidence_estimators}
+A model can be scored with several confidence estimators, of which the
+verbalized value is only one. To test whether the calibration that CalibSFT
+provides also reaches the others, we evaluate two widely used estimators on the
+responses sampled for the main evaluation, so that the answers, their
+correctness, and the sampling protocol match Table~\ref{tab:main_results}.
+
+\begin{itemize}
+    \item \textbf{Token probability.} We read the next-token distribution at the
+    position of the confidence value. Restricted to the ten digit tokens, the
+    distribution after \texttt{<confidence>} gives the integer digit and the
+    distribution after \texttt{<confidence>0.} gives the first decimal, which we
+    combine into $c=P(1)+P(0)\sum_{d=0}^{9} p(d)\,(d/10+0.05)$, replacing the
+    unobserved second decimal by the midpoint of its interval. Both
+    distributions are taken at temperature one; using the sampling temperature
+    $0.6$ instead changes the averages by at most $0.5$ points. Responses whose
+    confidence was filled in after the generation limit, at most $0.42\%$ of the
+    responses of a benchmark, keep their verbalized value.
+
+    \item \textbf{Self-consistency.} We group the four responses to a question,
+    32 on AIME, by answer equivalence and keep the largest group, with ties
+    broken by sampling order. The answer of that group determines correctness
+    and the mean verbalized confidence of its responses becomes the confidence,
+    so this estimator scores one prediction per question and its accuracy column
+    reports majority-vote accuracy.
+\end{itemize}
+
+Table~\ref{tab:confidence_estimators} reports both estimators next to verbalized
+confidence. CalibSFT initialization improves every metric under every estimator
+on both splits. Under token probability, AUROC rises from 84.13 to 88.24
+in-distribution and Brier score falls from 31.22 to 22.80 out-of-distribution;
+under self-consistency, ECE falls from 19.68 to 11.83 and from 30.53 to 18.18.
+The estimators themselves differ in what they add. Token probability raises
+AUROC by about 1.4 points in-distribution over the verbalized value it is read
+from, for both initializations. Self-consistency raises majority-vote accuracy
+and lowers Brier score, but its ECE stays above the verbalized value
+in-distribution, 19.68 against 16.84 without CalibSFT and 11.83 against 10.84
+with it.
+
+\input{confidence_estimators.tex}
 
 \subsection{Confidence Visualization}
 \label{sec:confidence_visualization}
-\textbf{[TODO:]} Show reliability diagrams and confidence distributions
-for models with and without CalibSFT initialization.
+Figures~\ref{fig:reliability_id} and~\ref{fig:reliability_ood} show reliability
+diagrams of RLCR with and without CalibSFT initialization on three
+in-distribution and three out-of-distribution benchmarks, computed from the
+responses of the main evaluation over ten equal-width confidence intervals.
 
-\subsection{Training Efficiency}
-\textbf{[TODO:]} Compare CalibSFT and confidence-aware RL using wall-clock time,
-GPU-hours, optimization steps, and generated rollout/token counts.
+CalibSFT reduces miscalibration in both directions. Where RLCR is overconfident,
+its mean confidence exceeds its accuracy by 38.1 points on MinervaMath, 52.4 on
+NQOpen, and 29.1 on LiveBenchReasoning, and the bars move toward the diagonal
+once RL starts from CalibSFT: ECE falls from 38.12 to 26.33 on MinervaMath and
+from 52.43 to 30.89 on NQOpen. Where RLCR is underconfident, on MATH-500, its
+accuracy exceeds its confidence for $97\%$ of the responses and by 18 points in
+the interval $(0.6,0.7]$; CalibSFT reduces this gap to 6 points at its widest
+and ECE from 7.43 to 3.69. The correction also spreads the responses over more
+intervals: on HotpotQA the share in the top interval falls from $55.7\%$ to
+$10.9\%$, and the number of intervals holding at least $1\%$ of the responses
+rises from six to nine on MinervaMath, HotpotQA, and NQOpen. What remains
+differs by benchmark, as MinervaMath and NQOpen stay overconfident in every
+occupied interval, while LiveBenchReasoning turns underconfident for $95\%$ of
+its responses.
 
-\subsection{Qualitative Case Studies}
-\textbf{[TODO:]} Include representative high-confidence errors,
-low-confidence correct answers, confidence corrections preserved after RL, and
-failure cases.
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\linewidth]{figures/reliability_id.pdf}
+    \caption{Reliability diagrams of RLCR with and without CalibSFT
+    initialization on in-distribution benchmarks. Bars show the accuracy in
+    each of ten equal-width confidence bins, and hatched regions show the gap
+    to the bin midpoint. Bins containing less than 1\% of responses are faded
+    and shown without gaps.}
+    \label{fig:reliability_id}
+\end{figure}
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\linewidth]{figures/reliability_ood.pdf}
+    \caption{Reliability diagrams of RLCR with and without CalibSFT
+    initialization on out-of-distribution benchmarks. Bars, gaps, and faded
+    bins follow Figure~\ref{fig:reliability_id}.}
+    \label{fig:reliability_ood}
+\end{figure}
+
+\subsection{Annotation and Compute Cost}
+\label{sec:training_cost}
+CalibSFT requires no human annotation. Its targets combine the group success
+rate $q_x$ with the correctness $z_i$ of an individual response, and both come
+from the verifier that also produces the reward during RL, applied to responses
+the model samples itself. The responses are drawn once, before training, and the
+resulting targets initialize every confidence-aware RL method we study, whereas
+RL draws new responses at every optimization step.
+
+Table~\ref{tab:training_cost} compares the two training stages at a common
+budget of 200 optimization steps, each run on one node with eight NVIDIA B20Z
+GPUs. A step of CalibSFT takes 0.33 minutes against 4.77 minutes for a step of
+RLCR, which samples new responses before every update, so the supervised stage
+costs $6.9\%$ of the GPU-hours the RL stage does. Wall-clock time includes model
+loading, periodic validation, and checkpoint writing.
+
+\begin{table}[t]
+    \centering
+    \caption{Training cost of the CalibSFT stage and of confidence-aware RL on
+    one node with eight NVIDIA B20Z GPUs. Runs of 180 (CalibSFT) and 160 (RL)
+    optimization steps are scaled linearly to a common budget of 200 steps.}
+    \label{tab:training_cost}
+    \footnotesize
+    \begin{tabular}{lccc}
+        \toprule
+        Stage & Minutes per step & Wall-clock (h) & GPU-hours \\
+        \midrule
+        CalibSFT & 0.33 & 1.1 & 8.8 \\
+        \midrule
+        RLCR & 4.77 & 15.9 & 127.3 \\
+        RLCR + CalibSFT & 4.58 & 15.3 & 122.2 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
 
 \section{Downstream Applications}
 
-\subsection{Selective Answering and Risk Control}
+\subsection{Selective Risk Control}
+\label{sec:selective_risk_control}
 
-\textbf{[TODO:]} Rank responses by confidence and report risk--coverage curves,
-AURC, and accuracy at matched coverage. Compare Base, confidence-aware RL, and
-CalibSFT-initialized RL to test whether the calibration improvements translate
-into more reliable abstention decisions.
+A model that reports calibrated confidence can decide when to answer and when
+to abstain, but a deployment needs that decision to come with a guarantee rather
+than with a threshold chosen by hand. Learn-then-Test~\citep{angelopoulos2024learn}
+turns the choice into a multiple-testing problem: for each candidate threshold,
+the null hypothesis states that the selective risk, the error rate among the
+responses the model answers, exceeds a budget $r_{\max}$, and any threshold whose hypothesis is rejected carries
+a finite-sample guarantee. Following~\citet{shen2026provable}, we test the
+hypotheses with Clopper--Pearson upper limits~\citep{clopper1934use} and correct
+for the 101 candidate thresholds on the grid $\{0, 0.01, \ldots, 1\}$ with a union
+bound at $\delta=0.05$, and we keep the smallest threshold that passes, which
+answers as many questions as the guarantee allows. Conformal risk control~\citep{angelopoulos2024conformal} offers a
+simpler construction, but it bounds the expectation of a monotone loss, whereas
+the selective risk is a ratio whose denominator depends on the threshold and the
+guarantee we want holds with probability $1-\delta$ for the single threshold a
+deployment fixes. We split the questions of a split in half. The calibration half keeps one response per question, so the
+counted responses are independent draws, and the test half contributes all of its
+responses. The same machinery supports other decisions once a
+confidence score is available, such as routing a question to a set of models
+under a misrouting-risk constraint~\citep{hao2026racer} or accepting model
+labels under a false-discovery-rate constraint~\citep{huang2025model}. Validity
+alone does not make a threshold useful: a confidence that takes few distinct
+values leaves few candidates that can pass, so the certificate becomes
+conservative even when the ranking is informative.
+
+Table~\ref{tab:risk_control} reports the coverage that this procedure certifies.
+At a $10\%$ risk budget in-distribution, CalibSFT initialization raises certified
+coverage for every method, from 31.3 to 59.7 for RLCR and from 28.8 to 64.9 for
+ReDoubt, and it certifies CoCA and C3RL at 49.9 and 49.2 where no threshold
+passes without it. Out-of-distribution the separation is sharper: at a $20\%$
+budget none of the five methods admits any certified threshold, while CalibSFT
+initialization certifies all five between 16.8 and 22.8. The remaining gap to a
+perfect ranking of the same responses, 80.4 in-distribution and 54.5 out-of-distribution,
+shows how much of the loss comes from the task rather than from the procedure; at
+a $10\%$ budget out-of-distribution, where a perfect ranking would certify only
+48.9, no configuration passes. The realized error rate on held-out questions
+stays below the budget in every configuration, reaching at most 9.5 and 18.2.
+Figure~\ref{fig:risk_control} sweeps the budget and shows where the two
+initializations differ. Without CalibSFT, certified coverage climbs in steps and
+jumps almost vertically for CoCA and C3RL, because the few confidence values the
+model emits leave few usable thresholds; the same sparsity makes the baselines
+vary across calibration splits, by up to 8.0 points for RLCR in-distribution
+against 2.5 with CalibSFT. With CalibSFT the curve rises smoothly, so a threshold
+exists for any budget a deployment may ask for.
+
+\input{risk_control.tex}
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\linewidth]{figures/risk_control.pdf}
+    \caption{Certified coverage across risk budgets for confidence-aware RL with
+    and without CalibSFT initialization, on the in-distribution (top) and
+    out-of-distribution (bottom) benchmarks. Curves average ten calibration
+    splits and shaded bands show their standard deviation. The dashed line is
+    the coverage a perfect ranking of the same responses would certify.}
+    \label{fig:risk_control}
+\end{figure}
 
 \subsection{Confidence-Guided Efficient Reasoning}
+\label{sec:efficient_reasoning}
 
-\textbf{[TODO:]} Use confidence to allocate additional generation budget or
-route uncertain questions to a stronger inference procedure. Compare against
-fixed-budget and random-routing baselines at matched token cost, reporting
-accuracy, calibration, and total generated tokens.
+\textbf{[TODO:]} Answer each question first under a small generation budget and
+re-answer only the questions whose confidence falls below a threshold under the
+full budget. Following the performance-loss guarantees of efficient reasoning,
+choose that threshold on a calibration split so that the accuracy loss against
+always using the full budget stays below a tolerance with probability
+$1-\delta$, and report the generated tokens this saves for confidence-aware RL
+with and without CalibSFT initialization, against fixed-budget and
+random-routing baselines.
 
 \end{document}
