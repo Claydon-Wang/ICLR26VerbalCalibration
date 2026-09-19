@@ -1,0 +1,35 @@
+\begin{table*}[t]
+    \centering
+    \caption{Confidence diversity on the in-distribution and out-of-distribution splits, under the
+    protocol of Table~\ref{tab:main_results}. Distinct counts the confidence values a model
+    produces, Top-1 and Top-3 are the share of responses taking its most frequent one and three
+    values, and Effective is the exponential of the entropy of the value distribution, that is, the
+    number of values that would carry the same mass if used uniformly. Distinct and Effective are
+    counts; Top-1 and Top-3 are percentages.}
+    \label{tab:diversity_metrics}
+    \resizebox{0.98\textwidth}{!}{%
+    \renewcommand\arraystretch{1.0}
+    \begin{tabular}{lcccccccc}
+        \toprule
+        & \multicolumn{4}{c}{In-distribution} & \multicolumn{4}{c}{Out-of-distribution} \\
+        \cmidrule(lr){2-5} \cmidrule(lr){6-9}
+        Method & Distinct $\uparrow$ & Top-1 $\downarrow$ & Top-3 $\downarrow$ & Effective $\uparrow$ & Distinct $\uparrow$ & Top-1 $\downarrow$ & Top-3 $\downarrow$ & Effective $\uparrow$ \\
+        \midrule
+        RLCR & 15.75 & 33.30 & 67.74 & 6.90 & 18.62 & 33.18 & 66.22 & 7.03 \\
+        \rowcolor{calibrow} + CalibSFT & \textbf{86.88} & \textbf{12.59} & \textbf{20.57} & \textbf{49.42} & \textbf{94.50} & \textbf{3.73} & \textbf{9.90} & \textbf{72.83} \\
+        \midrule
+        ReDoubt & 7.62 & 43.17 & 92.47 & 3.50 & 10.88 & 44.84 & 86.31 & 4.20 \\
+        \rowcolor{calibrow} + CalibSFT & \textbf{58.00} & \textbf{9.43} & \textbf{23.64} & \textbf{32.03} & \textbf{59.50} & \textbf{7.83} & \textbf{20.70} & \textbf{31.62} \\
+        \midrule
+        CoCA & 12.75 & 55.50 & 77.38 & 4.85 & 13.62 & 46.41 & 67.06 & 6.06 \\
+        \rowcolor{calibrow} + CalibSFT & \textbf{47.62} & \textbf{13.62} & \textbf{30.12} & \textbf{26.22} & \textbf{52.12} & \textbf{10.71} & \textbf{26.88} & \textbf{24.69} \\
+        \midrule
+        DCPO & 15.75 & 59.32 & 80.94 & 4.40 & 18.62 & 43.97 & 73.64 & 6.06 \\
+        \rowcolor{calibrow} + CalibSFT & \textbf{72.75} & \textbf{21.54} & \textbf{41.93} & \textbf{27.14} & \textbf{84.25} & \textbf{5.78} & \textbf{15.07} & \textbf{53.93} \\
+        \midrule
+        C3RL & 8.50 & 83.23 & 96.46 & 1.97 & 9.38 & 71.04 & 91.77 & 2.79 \\
+        \rowcolor{calibrow} + CalibSFT & \textbf{10.00} & \textbf{46.09} & \textbf{70.97} & \textbf{5.68} & \textbf{10.00} & \textbf{36.37} & \textbf{65.54} & \textbf{6.46} \\
+        \bottomrule
+    \end{tabular}
+    }
+\end{table*}

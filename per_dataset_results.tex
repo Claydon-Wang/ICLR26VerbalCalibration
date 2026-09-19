@@ -15,7 +15,7 @@ Method & P@1 & AUROC & Brier & ECE \\
 \end{subtable}%
 }
 
-\begin{table*}[p]
+\begin{table*}[!t]
 \centering
 \caption{Per-dataset results on the in-domain mathematical benchmarks. Base,
 RLVR, and standalone CalibSFT use 6,144 tokens; downstream RL models use
@@ -23,111 +23,111 @@ RLVR, and standalone CalibSFT use 6,144 tokens; downstream RL models use
 and 32 per AIME question.}
 \label{tab:appendix_id_results}
 \appendixdatasettable{DeepScaleR-Eval}{
-Base & 60.84 & 66.31 & 34.09 & 34.06 \\
-RLVR & \textbf{70.15} & 68.11 & 26.94 & 26.37 \\
-\rowcolor{calibrow} CalibSFT & 60.88 & \textbf{73.76} & \textbf{23.60} & \textbf{17.57} \\
+Base & 61.00 & 66.38 & 33.94 & 33.90 \\
+RLVR & \textbf{70.26} & 67.94 & 26.85 & 26.26 \\
+\rowcolor{calibrow} CalibSFT & 61.30 & \textbf{76.39} & \textbf{22.65} & \textbf{17.28} \\
 \midrule
-RLCR & 71.24 & 75.33 & 16.65 & 5.14 \\
-\rowcolor{calibrow} + CalibSFT & \textbf{72.47} & \textbf{79.34} & \textbf{15.33} & \textbf{4.58} \\
+RLCR & 71.47 & 75.45 & 16.56 & 5.02 \\
+\rowcolor{calibrow} + CalibSFT & \textbf{72.47} & \textbf{79.19} & \textbf{15.43} & \textbf{4.63} \\
 \midrule
-ReDoubt & 71.53 & 75.92 & 17.13 & 10.28 \\
-\rowcolor{calibrow} + CalibSFT & \textbf{72.36} & \textbf{78.06} & \textbf{16.06} & \textbf{6.67} \\
+ReDoubt & 71.62 & 75.91 & 17.12 & 10.28 \\
+\rowcolor{calibrow} + CalibSFT & \textbf{72.42} & \textbf{77.98} & \textbf{16.07} & \textbf{6.71} \\
 \midrule
-CoCA & 70.16 & 73.17 & 17.73 & 8.51 \\
-\rowcolor{calibrow} + CalibSFT & \textbf{71.45} & \textbf{78.71} & \textbf{16.41} & \textbf{7.92} \\
+CoCA & 70.33 & 73.21 & 17.69 & 8.50 \\
+\rowcolor{calibrow} + CalibSFT & \textbf{71.54} & \textbf{78.46} & \textbf{16.45} & \textbf{7.76} \\
 \midrule
-DCPO & \textbf{71.45} & 71.74 & 17.30 & 6.50 \\
-\rowcolor{calibrow} + CalibSFT & 70.46 & \textbf{77.71} & \textbf{16.06} & \textbf{5.95} \\
+DCPO & \textbf{71.66} & 71.72 & 17.23 & 6.36 \\
+\rowcolor{calibrow} + CalibSFT & 70.54 & \textbf{77.54} & \textbf{16.16} & \textbf{5.87} \\
 \midrule
-C3RL & 70.65 & 62.87 & 24.64 & 25.05 \\
-\rowcolor{calibrow} + CalibSFT & \textbf{71.05} & \textbf{71.91} & \textbf{19.93} & \textbf{14.72} \\
+C3RL & 70.84 & 62.79 & 24.50 & 24.86 \\
+\rowcolor{calibrow} + CalibSFT & \textbf{71.25} & \textbf{71.52} & \textbf{20.08} & \textbf{14.85} \\
 }\hfill
 \appendixdatasettable{MATH-500}{
-Base & 83.90 & 63.80 & 14.78 & 13.87 \\
-RLVR & \textbf{89.15} & 67.69 & \textbf{10.13} & \textbf{8.76} \\
-\rowcolor{calibrow} CalibSFT & 83.65 & \textbf{82.11} & 14.70 & 11.53 \\
+Base & 84.50 & 65.22 & 14.18 & 13.27 \\
+RLVR & \textbf{89.50} & 67.63 & \textbf{9.80} & \textbf{8.41} \\
+\rowcolor{calibrow} CalibSFT & 84.00 & \textbf{81.51} & 16.49 & 14.06 \\
 \midrule
-RLCR & \textbf{90.50} & 76.39 & 7.54 & 7.43 \\
-\rowcolor{calibrow} + CalibSFT & 90.15 & \textbf{89.79} & \textbf{6.56} & \textbf{3.69} \\
+RLCR & \textbf{90.80} & 76.45 & 7.42 & 7.53 \\
+\rowcolor{calibrow} + CalibSFT & 90.35 & \textbf{89.86} & \textbf{6.46} & \textbf{3.89} \\
 \midrule
-ReDoubt & \textbf{90.05} & 74.85 & 9.82 & \textbf{15.01} \\
-\rowcolor{calibrow} + CalibSFT & 89.45 & \textbf{89.64} & \textbf{9.60} & 16.74 \\
+ReDoubt & \textbf{90.10} & 75.41 & 9.79 & \textbf{15.06} \\
+\rowcolor{calibrow} + CalibSFT & 89.70 & \textbf{89.44} & \textbf{9.59} & 16.99 \\
 \midrule
-CoCA & \textbf{89.85} & 72.69 & 10.64 & 18.18 \\
-\rowcolor{calibrow} + CalibSFT & \textbf{89.85} & \textbf{87.29} & \textbf{9.09} & \textbf{15.49} \\
+CoCA & \textbf{90.10} & 73.02 & 10.57 & 18.22 \\
+\rowcolor{calibrow} + CalibSFT & 90.05 & \textbf{87.05} & \textbf{9.08} & \textbf{15.69} \\
 \midrule
-DCPO & 89.30 & 70.77 & 7.90 & \textbf{6.27} \\
-\rowcolor{calibrow} + CalibSFT & \textbf{90.20} & \textbf{84.89} & \textbf{7.68} & 7.70 \\
+DCPO & 89.65 & 70.59 & \textbf{7.67} & \textbf{6.52} \\
+\rowcolor{calibrow} + CalibSFT & \textbf{90.40} & \textbf{84.55} & 7.71 & 7.83 \\
 \midrule
-C3RL & \textbf{89.40} & 60.22 & \textbf{9.42} & 9.75 \\
-\rowcolor{calibrow} + CalibSFT & 87.70 & \textbf{84.76} & 10.37 & \textbf{9.36} \\
+C3RL & \textbf{89.85} & 60.68 & \textbf{8.97} & \textbf{9.30} \\
+\rowcolor{calibrow} + CalibSFT & 88.05 & \textbf{84.35} & 10.47 & 9.71 \\
 }\hfill
 \appendixdatasettable{MinervaMath}{
-Base & \textbf{39.89} & \textbf{63.26} & 53.79 & 55.28 \\
-RLVR & 37.96 & 60.92 & 57.18 & 58.40 \\
-\rowcolor{calibrow} CalibSFT & \textbf{39.89} & 57.50 & \textbf{30.33} & \textbf{24.20} \\
+Base & 47.52 & 60.84 & 46.83 & 47.65 \\
+RLVR & \textbf{52.85} & 60.81 & 43.34 & 43.51 \\
+\rowcolor{calibrow} CalibSFT & 44.94 & \textbf{66.31} & \textbf{25.37} & \textbf{17.42} \\
 \midrule
-RLCR & 36.67 & 66.67 & 35.91 & 38.12 \\
-\rowcolor{calibrow} + CalibSFT & \textbf{37.04} & \textbf{76.29} & \textbf{26.81} & \textbf{26.33} \\
+RLCR & 51.75 & 61.57 & 29.17 & 23.05 \\
+\rowcolor{calibrow} + CalibSFT & \textbf{51.93} & \textbf{73.00} & \textbf{22.59} & \textbf{12.00} \\
 \midrule
-ReDoubt & \textbf{37.59} & 66.65 & 27.92 & 25.37 \\
-\rowcolor{calibrow} + CalibSFT & 36.21 & \textbf{83.73} & \textbf{21.06} & \textbf{22.86} \\
+ReDoubt & \textbf{52.30} & 60.64 & 25.36 & 10.67 \\
+\rowcolor{calibrow} + CalibSFT & 51.38 & \textbf{74.47} & \textbf{20.96} & \textbf{9.35} \\
 \midrule
-CoCA & 35.20 & 65.28 & 32.43 & 33.26 \\
-\rowcolor{calibrow} + CalibSFT & \textbf{36.95} & \textbf{78.62} & \textbf{23.47} & \textbf{24.42} \\
+CoCA & 49.63 & 64.28 & 26.82 & 18.83 \\
+\rowcolor{calibrow} + CalibSFT & \textbf{50.55} & \textbf{76.38} & \textbf{21.78} & \textbf{13.77} \\
 \midrule
-DCPO & 34.93 & 64.19 & 41.78 & 44.59 \\
-\rowcolor{calibrow} + CalibSFT & \textbf{36.86} & \textbf{74.73} & \textbf{23.33} & \textbf{20.25} \\
+DCPO & \textbf{50.64} & 63.57 & 31.72 & 29.05 \\
+\rowcolor{calibrow} + CalibSFT & 50.55 & \textbf{76.00} & \textbf{20.53} & \textbf{8.83} \\
 \midrule
-C3RL & \textbf{37.22} & 56.00 & 58.42 & 59.49 \\
-\rowcolor{calibrow} + CalibSFT & 35.85 & \textbf{77.64} & \textbf{20.14} & \textbf{16.95} \\
+C3RL & 50.37 & 57.50 & 45.46 & 46.34 \\
+\rowcolor{calibrow} + CalibSFT & \textbf{51.01} & \textbf{73.31} & \textbf{21.79} & \textbf{13.06} \\
 }
 
 \medskip
 \appendixdatasettable{OlympiadBench}{
-Base & 54.41 & 69.82 & 38.93 & 40.13 \\
-RLVR & \textbf{56.31} & 72.84 & 39.35 & 39.98 \\
-\rowcolor{calibrow} CalibSFT & 51.67 & \textbf{79.33} & \textbf{22.48} & \textbf{20.62} \\
+Base & \textbf{61.42} & 74.08 & 32.51 & 33.33 \\
+RLVR & 61.39 & 73.08 & 34.64 & 34.90 \\
+\rowcolor{calibrow} CalibSFT & 60.50 & \textbf{85.75} & \textbf{16.72} & \textbf{11.61} \\
 \midrule
-RLCR & 57.83 & 81.78 & 19.04 & \textbf{12.50} \\
-\rowcolor{calibrow} + CalibSFT & \textbf{58.46} & \textbf{89.71} & \textbf{16.09} & 13.25 \\
+RLCR & 63.17 & 83.46 & 16.73 & \textbf{8.48} \\
+\rowcolor{calibrow} + CalibSFT & \textbf{63.28} & \textbf{89.00} & \textbf{14.60} & 9.25 \\
 \midrule
-ReDoubt & 57.57 & 80.67 & 18.18 & \textbf{8.36} \\
-\rowcolor{calibrow} + CalibSFT & \textbf{58.35} & \textbf{91.01} & \textbf{14.96} & 16.88 \\
+ReDoubt & 62.80 & 81.10 & 17.14 & \textbf{7.73} \\
+\rowcolor{calibrow} + CalibSFT & \textbf{63.58} & \textbf{90.10} & \textbf{14.29} & 14.69 \\
 \midrule
-CoCA & \textbf{56.38} & 80.19 & 20.14 & \textbf{14.63} \\
-\rowcolor{calibrow} + CalibSFT & 56.19 & \textbf{90.47} & \textbf{18.09} & 20.16 \\
+CoCA & \textbf{61.57} & 81.47 & 18.37 & \textbf{14.56} \\
+\rowcolor{calibrow} + CalibSFT & \textbf{61.57} & \textbf{88.17} & \textbf{17.05} & 17.07 \\
 \midrule
-DCPO & 57.05 & 78.43 & 21.85 & 17.75 \\
-\rowcolor{calibrow} + CalibSFT & \textbf{57.46} & \textbf{88.53} & \textbf{15.72} & \textbf{12.14} \\
+DCPO & 62.24 & 79.80 & 18.80 & 12.97 \\
+\rowcolor{calibrow} + CalibSFT & \textbf{62.91} & \textbf{87.43} & \textbf{14.76} & \textbf{8.93} \\
 \midrule
-C3RL & \textbf{57.68} & 62.66 & 35.85 & 37.52 \\
-\rowcolor{calibrow} + CalibSFT & 56.64 & \textbf{84.53} & \textbf{17.91} & \textbf{18.60} \\
+C3RL & 63.06 & 64.34 & 30.64 & 32.22 \\
+\rowcolor{calibrow} + CalibSFT & \textbf{63.61} & \textbf{80.73} & \textbf{18.05} & \textbf{15.26} \\
 }\hfill
 \appendixdatasettable{GSM8K}{
-Base & 94.35 & 67.82 & 5.20 & 3.39 \\
-RLVR & \textbf{94.64} & 67.97 & \textbf{5.06} & \textbf{3.05} \\
-\rowcolor{calibrow} CalibSFT & 94.31 & \textbf{70.24} & 17.90 & 20.78 \\
+Base & 94.39 & 67.91 & 5.16 & 3.35 \\
+RLVR & \textbf{94.71} & \textbf{68.09} & \textbf{4.99} & \textbf{2.98} \\
+\rowcolor{calibrow} CalibSFT & 94.60 & 66.46 & 25.93 & 30.61 \\
 \midrule
-RLCR & \textbf{94.81} & 78.88 & 4.77 & 5.58 \\
-\rowcolor{calibrow} + CalibSFT & 94.67 & \textbf{82.60} & \textbf{4.64} & \textbf{2.72} \\
+RLCR & \textbf{94.86} & 78.70 & 4.75 & 5.64 \\
+\rowcolor{calibrow} + CalibSFT & 94.77 & \textbf{82.24} & \textbf{4.65} & \textbf{2.81} \\
 \midrule
-ReDoubt & \textbf{94.96} & 78.40 & \textbf{7.07} & \textbf{16.27} \\
-\rowcolor{calibrow} + CalibSFT & 94.69 & \textbf{80.28} & 7.50 & 17.62 \\
+ReDoubt & \textbf{95.00} & 78.24 & \textbf{7.07} & \textbf{16.31} \\
+\rowcolor{calibrow} + CalibSFT & 94.77 & \textbf{80.01} & 7.48 & 17.69 \\
 \midrule
-CoCA & \textbf{94.58} & 69.00 & 8.94 & 21.02 \\
-\rowcolor{calibrow} + CalibSFT & 94.56 & \textbf{71.85} & \textbf{8.26} & \textbf{18.10} \\
+CoCA & \textbf{94.66} & 68.97 & 8.91 & 21.10 \\
+\rowcolor{calibrow} + CalibSFT & 94.64 & \textbf{71.42} & \textbf{8.25} & \textbf{18.18} \\
 \midrule
-DCPO & \textbf{94.48} & 68.34 & \textbf{5.50} & 9.13 \\
-\rowcolor{calibrow} + CalibSFT & 94.45 & \textbf{73.40} & 5.80 & \textbf{7.48} \\
+DCPO & \textbf{94.58} & 68.17 & \textbf{5.44} & 9.17 \\
+\rowcolor{calibrow} + CalibSFT & 94.50 & \textbf{73.10} & 5.82 & \textbf{7.54} \\
 \midrule
-C3RL & \textbf{94.37} & 57.25 & 5.33 & 5.24 \\
-\rowcolor{calibrow} + CalibSFT & 94.29 & \textbf{64.91} & \textbf{5.26} & \textbf{5.08} \\
+C3RL & \textbf{94.43} & 57.33 & \textbf{5.28} & 5.18 \\
+\rowcolor{calibrow} + CalibSFT & 94.37 & \textbf{64.41} & 5.30 & \textbf{5.16} \\
 }\hfill
 \appendixdatasettable{AIME2024}{
 Base & 48.23 & 81.93 & 39.61 & 42.50 \\
 RLVR & \textbf{52.92} & 82.05 & 39.49 & 41.15 \\
-\rowcolor{calibrow} CalibSFT & 45.42 & \textbf{89.96} & \textbf{11.93} & \textbf{6.03} \\
+\rowcolor{calibrow} CalibSFT & 47.08 & \textbf{89.04} & \textbf{10.35} & \textbf{7.73} \\
 \midrule
 RLCR & 59.48 & \textbf{93.59} & 13.17 & 19.70 \\
 \rowcolor{calibrow} + CalibSFT & \textbf{64.17} & 92.42 & \textbf{10.97} & \textbf{9.79} \\
@@ -149,7 +149,7 @@ C3RL & 59.69 & 80.93 & 25.25 & 30.19 \\
 \appendixdatasettable{AIME2025}{
 Base & 35.00 & 82.75 & 48.25 & 52.81 \\
 RLVR & \textbf{43.44} & 84.95 & 45.87 & 49.00 \\
-\rowcolor{calibrow} CalibSFT & 34.27 & \textbf{92.48} & \textbf{9.95} & \textbf{8.02} \\
+\rowcolor{calibrow} CalibSFT & 35.83 & \textbf{86.49} & \textbf{9.61} & \textbf{6.59} \\
 \midrule
 RLCR & 43.33 & \textbf{95.53} & \textbf{13.60} & 23.06 \\
 \rowcolor{calibrow} + CalibSFT & \textbf{48.02} & 92.40 & 13.87 & \textbf{14.28} \\
@@ -169,7 +169,7 @@ C3RL & \textbf{43.96} & 79.01 & 36.25 & 42.69 \\
 \appendixdatasettable{AIME2026}{
 Base & 42.50 & 76.08 & 45.13 & 48.07 \\
 RLVR & \textbf{48.23} & 80.70 & 43.82 & 45.92 \\
-\rowcolor{calibrow} CalibSFT & 39.48 & \textbf{88.65} & \textbf{13.22} & \textbf{9.79} \\
+\rowcolor{calibrow} CalibSFT & 39.79 & \textbf{87.44} & \textbf{11.26} & \textbf{8.52} \\
 \midrule
 RLCR & 47.81 & \textbf{94.10} & 14.08 & 23.19 \\
 \rowcolor{calibrow} + CalibSFT & \textbf{52.60} & 92.48 & \textbf{13.57} & \textbf{12.04} \\
@@ -187,37 +187,36 @@ C3RL & 52.81 & 84.29 & 27.21 & 33.72 \\
 \rowcolor{calibrow} + CalibSFT & \textbf{53.65} & \textbf{91.31} & \textbf{15.69} & \textbf{18.30} \\
 }\hfill
 \appendixdatasettable{Overall (ID)}{
-Base & 57.39 & 71.47 & 34.97 & 36.26 \\
-RLVR & \textbf{61.60} & 73.16 & 33.48 & 34.08 \\
-\rowcolor{calibrow} CalibSFT & 56.20 & \textbf{79.25} & \textbf{18.01} & \textbf{14.82} \\
+Base & 59.32 & 71.90 & 33.20 & 34.36 \\
+RLVR & \textbf{64.16} & 73.16 & 31.10 & 31.52 \\
+\rowcolor{calibrow} CalibSFT & 58.51 & \textbf{79.93} & \textbf{17.30} & \textbf{14.23} \\
 \midrule
-RLCR & 62.71 & 82.78 & 15.60 & 16.84 \\
-\rowcolor{calibrow} + CalibSFT & \textbf{64.70} & \textbf{86.88} & \textbf{13.48} & \textbf{10.84} \\
+RLCR & 65.33 & 82.36 & 14.43 & 14.46 \\
+\rowcolor{calibrow} + CalibSFT & \textbf{67.20} & \textbf{86.32} & \textbf{12.77} & \textbf{8.59} \\
 \midrule
-ReDoubt & 63.08 & 81.70 & 15.94 & 18.85 \\
-\rowcolor{calibrow} + CalibSFT & \textbf{64.99} & \textbf{88.33} & \textbf{13.00} & \textbf{16.20} \\
+ReDoubt & 65.59 & 81.05 & 15.48 & 16.94 \\
+\rowcolor{calibrow} + CalibSFT & \textbf{67.59} & \textbf{86.99} & \textbf{12.90} & \textbf{14.28} \\
 \midrule
-CoCA & 61.11 & 80.59 & 17.25 & 21.75 \\
-\rowcolor{calibrow} + CalibSFT & \textbf{62.65} & \textbf{86.31} & \textbf{16.40} & \textbf{20.21} \\
+CoCA & 63.62 & 80.66 & 16.31 & 19.95 \\
+\rowcolor{calibrow} + CalibSFT & \textbf{65.07} & \textbf{85.63} & \textbf{16.06} & \textbf{18.51} \\
 \midrule
-DCPO & 61.98 & 78.16 & 16.38 & 14.68 \\
-\rowcolor{calibrow} + CalibSFT & \textbf{62.40} & \textbf{85.16} & \textbf{13.29} & \textbf{12.20} \\
+DCPO & 64.68 & 78.21 & 14.69 & 12.16 \\
+\rowcolor{calibrow} + CalibSFT & \textbf{64.84} & \textbf{85.08} & \textbf{12.83} & \textbf{10.39} \\
 \midrule
-C3RL & 63.22 & 67.90 & 27.80 & 30.45 \\
-\rowcolor{calibrow} + CalibSFT & \textbf{63.32} & \textbf{80.88} & \textbf{15.65} & \textbf{15.18} \\
+C3RL & 65.62 & 68.36 & 25.44 & 28.06 \\
+\rowcolor{calibrow} + CalibSFT & \textbf{66.17} & \textbf{79.70} & \textbf{15.91} & \textbf{14.35} \\
 }
 \end{table*}
 
-\begin{table*}[p]
+\begin{table*}[!t]
 \centering
-\caption{Per-dataset results on the revised eight-dataset out-of-domain suite.
-Each question has four sampled responses at temperature 0.6.
-WebQuestions contains only examples with a single gold answer.}
+\caption{Per-dataset results on the out-of-domain benchmarks. The evaluation
+protocol matches Table~\ref{tab:appendix_id_results}.}
 \label{tab:appendix_ood_results}
 \appendixdatasettable{HotpotQA}{
 Base & 64.68 & \textbf{57.68} & 32.82 & 32.16 \\
 RLVR & 64.58 & 54.16 & 33.10 & 32.17 \\
-\rowcolor{calibrow} CalibSFT & \textbf{65.70} & 54.18 & \textbf{29.38} & \textbf{20.57} \\
+\rowcolor{calibrow} CalibSFT & \textbf{66.10} & 55.08 & \textbf{30.84} & \textbf{22.43} \\
 \midrule
 RLCR & 65.80 & 59.10 & 25.97 & 19.77 \\
 \rowcolor{calibrow} + CalibSFT & \textbf{66.27} & \textbf{59.23} & \textbf{24.25} & \textbf{10.85} \\
@@ -235,9 +234,9 @@ C3RL & 65.38 & 52.47 & 33.39 & 33.12 \\
 \rowcolor{calibrow} + CalibSFT & \textbf{66.50} & \textbf{58.94} & \textbf{28.45} & \textbf{19.78} \\
 }\hfill
 \appendixdatasettable{TriviaQA}{
-Base & \textbf{55.24} & 75.80 & 35.68 & 36.93 \\
+Base & 55.24 & 75.80 & 35.68 & 36.93 \\
 RLVR & 54.97 & \textbf{76.01} & 40.59 & 41.40 \\
-\rowcolor{calibrow} CalibSFT & 55.21 & 65.05 & \textbf{28.44} & \textbf{20.98} \\
+\rowcolor{calibrow} CalibSFT & \textbf{55.53} & 64.10 & \textbf{26.74} & \textbf{15.17} \\
 \midrule
 RLCR & 55.24 & \textbf{81.66} & 23.84 & 23.30 \\
 \rowcolor{calibrow} + CalibSFT & \textbf{55.25} & 81.53 & \textbf{18.89} & \textbf{10.71} \\
@@ -256,8 +255,8 @@ C3RL & 53.76 & \textbf{73.01} & 35.61 & 38.53 \\
 }\hfill
 \appendixdatasettable{DROP}{
 Base & 80.36 & 59.13 & 18.22 & 17.03 \\
-RLVR & \textbf{83.53} & 59.32 & \textbf{15.34} & \textbf{13.31} \\
-\rowcolor{calibrow} CalibSFT & 79.92 & \textbf{59.38} & 31.60 & 28.93 \\
+RLVR & \textbf{83.53} & \textbf{59.32} & \textbf{15.34} & \textbf{13.31} \\
+\rowcolor{calibrow} CalibSFT & 79.76 & 58.30 & 33.30 & 32.64 \\
 \midrule
 RLCR & 81.44 & 63.34 & \textbf{14.72} & \textbf{5.43} \\
 \rowcolor{calibrow} + CalibSFT & \textbf{82.32} & \textbf{74.44} & 14.99 & 10.75 \\
@@ -279,7 +278,7 @@ C3RL & \textbf{82.65} & 54.56 & \textbf{16.37} & \textbf{16.07} \\
 \appendixdatasettable{MuSiQue}{
 Base & 45.84 & \textbf{62.90} & 41.91 & 42.33 \\
 RLVR & 47.18 & 58.12 & 46.19 & 46.75 \\
-\rowcolor{calibrow} CalibSFT & \textbf{47.19} & 62.25 & \textbf{26.51} & \textbf{13.95} \\
+\rowcolor{calibrow} CalibSFT & \textbf{48.09} & 58.78 & \textbf{28.43} & \textbf{16.30} \\
 \midrule
 RLCR & 47.77 & 66.21 & 25.68 & 15.35 \\
 \rowcolor{calibrow} + CalibSFT & \textbf{49.97} & \textbf{67.87} & \textbf{23.22} & \textbf{6.13} \\
@@ -299,7 +298,7 @@ C3RL & 45.55 & 63.39 & 39.88 & 40.04 \\
 \appendixdatasettable{LiveBenchReasoning}{
 Base & 52.88 & 61.81 & 40.53 & 40.59 \\
 RLVR & 29.25 & 60.32 & 61.75 & 64.59 \\
-\rowcolor{calibrow} CalibSFT & \textbf{53.00} & \textbf{67.67} & \textbf{25.40} & \textbf{17.74} \\
+\rowcolor{calibrow} CalibSFT & \textbf{55.75} & \textbf{69.92} & \textbf{34.64} & \textbf{35.20} \\
 \midrule
 RLCR & 31.75 & 68.00 & 28.49 & 29.09 \\
 \rowcolor{calibrow} + CalibSFT & \textbf{42.25} & \textbf{68.41} & \textbf{21.94} & \textbf{7.75} \\
@@ -319,7 +318,7 @@ C3RL & 33.00 & \textbf{57.18} & 53.55 & 55.46 \\
 \appendixdatasettable{NQOpen}{
 Base & 21.12 & 66.31 & 66.04 & 70.59 \\
 RLVR & \textbf{24.13} & \textbf{67.07} & 68.92 & 71.55 \\
-\rowcolor{calibrow} CalibSFT & 21.64 & 59.59 & \textbf{27.33} & \textbf{29.16} \\
+\rowcolor{calibrow} CalibSFT & 21.57 & 59.58 & \textbf{25.69} & \textbf{26.36} \\
 \midrule
 RLCR & 23.32 & 70.48 & 43.84 & 52.43 \\
 \rowcolor{calibrow} + CalibSFT & \textbf{23.80} & \textbf{72.24} & \textbf{26.44} & \textbf{30.89} \\
@@ -341,7 +340,7 @@ C3RL & \textbf{22.43} & \textbf{64.77} & 63.63 & 68.49 \\
 \appendixdatasettable{PopQA}{
 Base & 20.85 & \textbf{74.94} & 57.89 & 64.10 \\
 RLVR & \textbf{21.37} & 72.78 & 68.14 & 71.96 \\
-\rowcolor{calibrow} CalibSFT & 21.00 & 63.88 & \textbf{24.80} & \textbf{26.68} \\
+\rowcolor{calibrow} CalibSFT & 21.06 & 64.33 & \textbf{24.14} & \textbf{25.70} \\
 \midrule
 RLCR & \textbf{21.29} & \textbf{76.88} & 37.71 & 47.90 \\
 \rowcolor{calibrow} + CalibSFT & 21.16 & 76.55 & \textbf{24.76} & \textbf{32.22} \\
@@ -361,7 +360,7 @@ C3RL & \textbf{20.81} & \textbf{71.98} & 54.60 & 61.92 \\
 \appendixdatasettable{WebQuestions}{
 Base & 21.88 & \textbf{67.10} & 68.16 & 71.80 \\
 RLVR & \textbf{26.02} & 65.76 & 68.29 & 70.41 \\
-\rowcolor{calibrow} CalibSFT & 23.59 & 59.02 & \textbf{32.52} & \textbf{35.25} \\
+\rowcolor{calibrow} CalibSFT & 23.11 & 59.54 & \textbf{29.45} & \textbf{30.13} \\
 \midrule
 RLCR & \textbf{25.07} & 69.40 & 48.86 & 56.11 \\
 \rowcolor{calibrow} + CalibSFT & 24.63 & \textbf{70.20} & \textbf{31.41} & \textbf{36.33} \\
@@ -381,7 +380,7 @@ C3RL & \textbf{23.94} & 60.19 & 67.27 & 70.35 \\
 \appendixdatasettable{Overall (OOD)}{
 Base & 45.36 & \textbf{65.71} & 45.15 & 46.94 \\
 RLVR & 43.88 & 64.19 & 50.29 & 51.52 \\
-\rowcolor{calibrow} CalibSFT & \textbf{45.91} & 61.38 & \textbf{28.25} & \textbf{24.16} \\
+\rowcolor{calibrow} CalibSFT & \textbf{46.37} & 61.20 & \textbf{29.15} & \textbf{25.49} \\
 \midrule
 RLCR & 43.96 & 69.38 & 31.14 & 31.17 \\
 \rowcolor{calibrow} + CalibSFT & \textbf{45.71} & \textbf{71.31} & \textbf{23.24} & \textbf{18.20} \\
@@ -390,7 +389,7 @@ ReDoubt & 43.71 & 69.88 & 25.07 & 23.98 \\
 \rowcolor{calibrow} + CalibSFT & \textbf{45.55} & \textbf{73.93} & \textbf{22.42} & \textbf{18.89} \\
 \midrule
 CoCA & 43.68 & 66.79 & 26.67 & 24.12 \\
-\rowcolor{calibrow} + CalibSFT & \textbf{45.55} & \textbf{71.21} & \textbf{22.95} & \textbf{18.89} \\
+\rowcolor{calibrow} + CalibSFT & \textbf{45.55} & \textbf{71.22} & \textbf{22.94} & \textbf{18.89} \\
 \midrule
 DCPO & 43.99 & 68.13 & 32.85 & 32.41 \\
 \rowcolor{calibrow} + CalibSFT & \textbf{44.82} & \textbf{72.75} & \textbf{21.73} & \textbf{17.31} \\

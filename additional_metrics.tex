@@ -1,0 +1,35 @@
+\begin{table*}[t]
+    \centering
+    \caption{Calibration and failure prediction under additional metrics, on the in-distribution
+    and out-of-distribution splits and under the protocol of Table~\ref{tab:main_results}. PCE is
+    the part of ECE contributed by the overconfident bins, Cap.\ Brier scores each question's mean
+    confidence against its rollout success rate, E-AURC is the excess of the risk--coverage area
+    over a perfect ranking, and RCE measures the deviation from a monotone correspondence between
+    confidence and expected correctness. All values are percentages.}
+    \label{tab:additional_metrics}
+    \resizebox{0.98\textwidth}{!}{%
+    \renewcommand\arraystretch{1.0}
+    \begin{tabular}{lcccccccc}
+        \toprule
+        & \multicolumn{4}{c}{In-distribution} & \multicolumn{4}{c}{Out-of-distribution} \\
+        \cmidrule(lr){2-5} \cmidrule(lr){6-9}
+        Method & PCE $\downarrow$ & Cap.\ Brier $\downarrow$ & E-AURC $\downarrow$ & RCE $\downarrow$ & PCE $\downarrow$ & Cap.\ Brier $\downarrow$ & E-AURC $\downarrow$ & RCE $\downarrow$ \\
+        \midrule
+        RLCR & 9.71 & 10.63 & 7.75 & 13.50 & 30.99 & 27.53 & 19.74 & 11.45 \\
+        \rowcolor{calibrow} + CalibSFT & \textbf{7.30} & \textbf{8.66} & \textbf{5.61} & \textbf{5.30} & \textbf{14.77} & \textbf{18.72} & \textbf{17.14} & \textbf{4.93} \\
+        \midrule
+        ReDoubt & 6.71 & 11.98 & 8.02 & 15.23 & 22.51 & 21.71 & 18.34 & 14.77 \\
+        \rowcolor{calibrow} + CalibSFT & \textbf{5.54} & \textbf{9.33} & \textbf{4.77} & \textbf{7.69} & \textbf{15.58} & \textbf{18.80} & \textbf{15.85} & \textbf{4.70} \\
+        \midrule
+        CoCA & \textbf{10.96} & 12.82 & 8.88 & 19.49 & 22.64 & 22.84 & 21.52 & 15.13 \\
+        \rowcolor{calibrow} + CalibSFT & 11.40 & \textbf{12.24} & \textbf{5.50} & \textbf{8.58} & \textbf{13.39} & \textbf{19.41} & \textbf{17.82} & \textbf{5.79} \\
+        \midrule
+        DCPO & 10.04 & 10.95 & 10.10 & 18.79 & 31.97 & 28.95 & 19.62 & 15.40 \\
+        \rowcolor{calibrow} + CalibSFT & \textbf{8.09} & \textbf{9.00} & \textbf{5.92} & \textbf{9.21} & \textbf{12.95} & \textbf{17.54} & \textbf{16.23} & \textbf{6.18} \\
+        \midrule
+        C3RL & 28.01 & 20.75 & 16.11 & 33.15 & 47.96 & 41.92 & 25.22 & 27.57 \\
+        \rowcolor{calibrow} + CalibSFT & \textbf{10.72} & \textbf{10.82} & \textbf{8.76} & \textbf{17.24} & \textbf{8.80} & \textbf{18.46} & \textbf{21.27} & \textbf{19.08} \\
+        \bottomrule
+    \end{tabular}
+    }
+\end{table*}

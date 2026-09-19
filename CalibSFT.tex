@@ -39,7 +39,7 @@
 \usepackage[hypcap=false]{caption}
 
 
-\title{On the Pitfalls of Verbalized Confidence Priors for Calibrating Reasoning LLMs}
+\title{On the Pitfalls of Verbalized Confidence Priors for Calibrating Large Reasoning Models}
 
 % Authors must not appear in the submitted version. They should be hidden
 % as long as the \iclrfinalcopy macro remains commented out below.
@@ -84,14 +84,15 @@ citecolor=mydarkgreen]{hyperref}
 
 \begin{abstract}
 Large reasoning language models (LRMs) frequently suffer from overconfidence when verbalizing their confidence.
-Confidence-aware reinforcement learning (RL) offers a promising way to optimize calibration; however, it relies only on self-sampled responses and is thus constrained by the pre-RL confidence distribution---termed the \emph{confidence prior}. 
-We reveal that off-the-shelf LLMs exhibit a confidence prior heavily concentrated on a few high values, and this concentration persists throughout RL and limits confidence exploration.
+Confidence-aware reinforcement learning (RL) offers a promising way to optimize calibration. 
+However, it relies on-policy rollouts and is constrained by the pre-RL confidence distribution---termed the \emph{confidence prior}. 
+We reveal that base LRMs exhibit a confidence prior heavily concentrated on a few high values, and this narrow support persists throughout RL even as the specific values shift.
 Theoretically, we prove that this concentration restricts policy gradient updates for rarely sampled confidence values and inflates the lower bound on expected Brier risk.
-To address this limitation, we propose \textbf{CalibSFT}, a supervised fine-tuning stage that shapes a calibrated confidence prior with broad support before confidence-aware RL.
-Specifically, CalibSFT derives confidence targets from model rollouts by combining question-level success rates with response-level correctness, which provably preserves the optimal confidence under any strictly proper scoring rule. 
-To avoid concentrated supervision, \textsc{CalibSFT} samples an equal number of responses for each target value. 
-It then applies correctness-conditional supervision, supervising confidence on all responses while restricting reasoning and answers to correct ones, so that incorrect responses teach the model to express low confidence rather than teach it incorrect solutions.
-Across 16 benchmarks, including mathematics and general reasoning, initializing with CalibSFT consistently reduces calibration errors across five confidence-aware RL algorithms (e.g., halving OOD ECE from 32.41\% to 17.31\% for DCPO) and improves discrimination without sacrificing accuracy.
+To overcome this exploration bottleneck, we propose \textbf{CalibSFT}, a plug-and-play supervised fine-tuning stage that shapes a calibrated confidence prior with broad support before confidence-aware RL.
+Specifically, CalibSFT derives confidence targets from multiple rollouts for each question by combining question-level success rates with response-level correctness, which provably preserves the optimal confidence under any strictly proper scoring rule. 
+To avoid concentrated supervision, CalibSFT applies target-balanced sampling across target values.
+It then introduces correctness-conditional supervision, guiding confidence across all responses while supervising reasoning only on correct ones, so that incorrect responses encourage low confidence without reinforcing incorrect solutions.
+Across 16 mathematical and general reasoning benchmarks, incorporating CalibSFT consistently reduces calibration errors for 5 confidence-aware RL algorithms (e.g., reducing OOD ECE from 32.41\% to 17.31\% for DCPO) and improves confidence discrimination without sacrificing accuracy.
 \end{abstract}
 
 % Hide main-text sections from the table of contents; only the appendix is listed.
@@ -100,13 +101,13 @@ Across 16 benchmarks, including mathematics and general reasoning, initializing 
 \section{Introduction}
 
 Large Reasoning language models (LRMs) have made substantial progress on complex tasks such as mathematics and coding~\citep{guo2025deepseek,yang2025qwen3}.
-However, these gains in accuracy do not imply reliable confidence: reasoning LLMs often remain overconfident in incorrect answers~\citep{mei2025reasoning}.
+However, these gains in accuracy do not imply reliable confidence: LRMs often remain overconfident in incorrect answers~\citep{mei2025reasoning}.
 A reliable model should therefore report \emph{calibrated} confidence~\citep{guo2017calibration}, which matches the probability that its answer is correct.
 Calibrated confidence indicates when an answer can be trusted, which enables applications such as hallucination detection~\citep{wu2026mitigating} and adaptive test-time scaling~\citep{yang2026scaling}.
 
 Beyond estimates derived from token probabilities, internal representations, or sampling consistency~\citep{luo2026your,srey2026signals,kuhn2023semantic}, a model can directly verbalize its confidence alongside its final answer.
 Unlike these alternatives, which rely on model internals or repeated sampling, verbalized confidence requires only a single black-box generation.
-However, off-the-shelf LLMs typically verbalize miscalibrated confidence that concentrates on a few high values regardless of accuracy~\citep{xiong2024can,mei2025reasoning,cacioli2026saturation}.
+However, base LRMs typically verbalize miscalibrated confidence that concentrates on a few high values regardless of accuracy~\citep{xiong2024can,mei2025reasoning,cacioli2026saturation}.
 To address this issue, post-training approaches calibrate verbalized confidence via either supervised fine-tuning (SFT) on constructed confidence targets~\citep{xu2024sayself,jang2025verbalized} or confidence-aware reinforcement learning (RL) guided by calibration rewards~\citep{damani2026beyond,ma2026decoupling}.
 
 Among these approaches, confidence-aware RL is particularly promising owing to its superior generalization beyond the training distribution~\citep{chu2025sft}.
@@ -115,7 +116,7 @@ In practice, this prior typically concentrates on a narrow set of high values ac
 Although confidence-aware RL explicitly penalizes miscalibration, this concentration persists throughout policy optimization and limits the exploration of diverse confidence values (Figure~\ref{fig:rlcr_training_calibration}).
 As we theoretically analyze in Section~\ref{sec:motivation}, the policy gradient for each confidence value scales with its sampling probability, so rarely sampled values are barely updated.
 Such concentration in turn raises the lower bound on the expected Brier loss and thus limits calibration after RL.
-Empirically, post-RL confidence does not track accuracy across tasks: mean confidence on MinervaMath is only 9.7\% lower than on Math500 even though Pass@1 is 53.8\% lower (Figure~\ref{fig:rlcr_test_calibration}).
+Empirically, post-RL confidence does not track accuracy across tasks: mean confidence on MinervaMath is only 9.7\% lower than on Math500 even though Pass@1 is 39.1\% lower (Figure~\ref{fig:rlcr_test_calibration}).
 
 Motivated by the miscalibration, we propose \textbf{CalibSFT}, a supervised fine-tuning stage that shapes a calibrated confidence prior with broad support before confidence-aware RL.
 Specifically, for each training question, CalibSFT samples multiple responses from the base model and assigns each a confidence target that balances the question-level success rate with response-level correctness.
@@ -132,7 +133,7 @@ Furthermore, CalibSFT remains effective across different confidence formats and 
 
 Our contributions are summarized as follows:
 \begin{enumerate}[leftmargin=*,itemsep=1pt,topsep=1pt]
-    \item We systematically identify that reasoning LLMs exhibit a concentrated confidence prior that persists throughout confidence-aware RL training. Theoretically, we prove that such a concentration bounds policy gradient exploration and inflates the lower bound on expected Brier loss.
+    \item We systematically identify that LRMs exhibit a concentrated confidence prior that persists throughout confidence-aware RL training. Theoretically, we prove that such a concentration bounds policy gradient exploration and inflates the lower bound on expected Brier loss.
     \item We propose CalibSFT, a supervised fine-tuning stage that constructs confidence targets from the model's own responses to provide a calibrated confidence prior for confidence-aware RL.
     \item Extensive experiments across 16 benchmarks and 5 confidence-aware RL methods demonstrate that CalibSFT alleviates confidence concentration, boosting calibration and discrimination without compromising task accuracy.
 \end{enumerate}
@@ -140,18 +141,18 @@ Our contributions are summarized as follows:
 
 \section{Preliminaries}
 
-\subsection{Verbalized Confidence for Reasoning LLMs}
+\subsection{Verbalized Confidence in Large Reasoning Models}
 
-In this work, we study the calibration of verbalized numerical confidence in large reasoning language models~\citep{tian2023just,xiong2024can}. Given a question $x$, the LLM
+In this work, we study the calibration of verbalized numerical confidence in large reasoning language models (LRMs)~\citep{xiong2024can,damani2026beyond}. Given a question $x$, the LRM
 $\pi_\theta$ generates a response $o=(r,a,c)$, where $r$ is a reasoning
 trace, $a$ is an answer, and $c\in[0,1]$ is a post-answer confidence
 value that represents the model's estimated probability that $a$ is
-correct. A task verifier assigns the response a binary correctness
-label $z=V(x,a)\in\{0,1\}$.
+correct.
 
 \paragraph{Confidence-aware rewards.}
 Reinforcement learning with verifiable rewards (RLVR) trains the policy
-with the correctness label $z$ as the reward. To further incorporate
+with the binary correctness label $z=V(x,a)\in\{0,1\}$ of an automated
+verifier $V$ as the reward. To further incorporate
 confidence into the optimization objective, confidence-aware RL adds a
 calibration reward that depends on both $c$ and $z$. For example,
 RLCR~\citep{damani2026beyond} sets the calibration reward to the
@@ -193,12 +194,10 @@ discriminative~\citep{eusebi2026reading}. Let $C$ and $Z$ denote the
 confidence and correctness random variables. Confidence is perfectly
 calibrated if $\Pr(Z=1\mid C=p)=p$ for every $p\in[0,1]$, and it is
 discriminative if correct responses receive higher confidence than
-incorrect ones.
-
-\textbf{Expected Calibration Error (ECE)}~\citep{guo2017calibration}
-measures the deviation from perfect calibration,
-$\mathbb E_C[|\Pr(Z=1\mid C)-C|]$. After partitioning $N$ responses into
-$B$ confidence bins $\{\mathcal I_b\}_{b=1}^{B}$, we estimate it as
+incorrect ones. We typically use \textbf{Expected Calibration Error
+(ECE)}~\citep{guo2017calibration}
+to measure the deviation from perfect calibration $\mathbb E_C[|\Pr(Z=1\mid C)-C|]$. 
+After partitioning $N$ responses into $B$ confidence bins $\{\mathcal I_b\}_{b=1}^{B}$, we estimate it as:
 \begin{equation}
     \operatorname{ECE}
     =\sum_{b=1}^{B}\frac{|\mathcal I_b|}{N}
@@ -208,17 +207,24 @@ $B$ confidence bins $\{\mathcal I_b\}_{b=1}^{B}$, we estimate it as
 where $\operatorname{acc}(\mathcal I_b)$ and
 $\operatorname{conf}(\mathcal I_b)$ are the mean correctness and
 confidence in bin $b$.
-While ECE compares confidence with accuracy at the bin level, the
-\textbf{Brier score}~\citep{brier1950verification},
-$\frac{1}{N}\sum_{j=1}^{N}(c_j-z_j)^2$, measures the squared error
-between confidence and correctness for each response and combines
-calibration and resolution~\citep{murphy1973new}.
+While ECE assesses calibration at the bin level, the \textbf{Brier score}~\citep{brier1950verification} computes response-level squared error, $\frac{1}{N}\sum_{j=1}^{N}(c_j-z_j)^2$, combining calibration with resolution (i.e., how well confidence separates correct and incorrect responses)~\citep{murphy1973new}.
 However, calibration alone does not imply discrimination. For example,
 assigning every response a constant confidence equal to the overall
 accuracy yields zero ECE while giving correct and incorrect responses
-identical scores~\citep{eusebi2026reading}. We therefore also report
-\textbf{AUROC}, a threshold-agnostic measure of how well confidence
-discriminates between correct and incorrect responses.
+identical scores~\citep{eusebi2026reading}. 
+We therefore also report \textbf{AUROC} to evaluate threshold-agnostic discrimination between correct and incorrect answers.
+These complementary metrics jointly evaluate calibration and discrimination, and we next investigate these properties in base LRMs and throughout RL training.
+
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\linewidth]{figures/raw_training_confidence_priors_k10.pdf}
+    \caption{Confidence distributions from three base models on DeepScaleR-Train.
+    Confidence concentrates on a few high values for both correct and
+    incorrect responses.}
+    \label{fig:initial_confidence_prior}
+\end{figure}
+
 
 \section{Motivation}
 \label{sec:motivation}
@@ -231,15 +237,6 @@ the distribution of sampled confidence values. We therefore examine this
 distribution before RL, during training, and at test time.
 
 
-\begin{figure}[t]
-    \centering
-    \includegraphics[width=\linewidth]{figures/raw_training_confidence_priors_k10.pdf}
-    \caption{Confidence distributions from three base models on DeepScaleR-Train.
-    Blue denotes correct responses and orange denotes incorrect responses.
-    Confidence concentrates on a few high values for both correct and
-    incorrect responses.}
-    \label{fig:initial_confidence_prior}
-\end{figure}
 
 \paragraph{Confidence priors concentrate on a few high values.}
 We refer to the confidence distribution before RL as the model's
@@ -255,17 +252,24 @@ track answer correctness.
 RL therefore starts from a concentrated confidence prior that rarely
 produces low-confidence samples.
 
+
+
+
 \paragraph{RL improves calibration but confidence concentration persists.}
-To examine whether confidence-aware RL overcomes this concentration,
-we train Qwen3-8B with RLCR~\citep{damani2026beyond}.
-As shown in Figure~\ref{fig:rlcr_training_calibration}(a), RLCR reduces
-Brier loss over training, showing that the calibration reward can be
-optimized.
-However, Figure~\ref{fig:rlcr_training_calibration}(b) shows that
-the model continues to sample a small set of confidence values per
-question, and confidence token entropy stays low throughout training
-(see Appendix~\ref{sec:training_dynamics}
-for training curves across RL objectives).
+To examine whether confidence-aware RL overcomes this concentration, we train Qwen3-8B with RLCR~\citep{damani2026beyond}. 
+As shown in Figure~\ref{fig:rlcr_training_calibration}, although the calibration reward lowers Brier loss and ECE, discrimination (AUROC) also declines. 
+This decline is accompanied by persistently low confidence token entropy, which prevents the policy from expanding its exploration over diverse confidence values.
+Consequently, the model merely shifts probability mass to satisfy average calibration, without learning to distinguish correct and incorrect responses.
+We provide results across more confidence-aware RL algorithms in Appendix~\ref{sec:training_dynamics}, where confidence token entropy consistently tracks the number of distinct sampled confidence values throughout training.
+
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\linewidth]{figures/rlcr_motivation.pdf}
+    \caption{Training dynamics of RLCR on Qwen3-8B. The calibration reward lowers Brier loss and ECE, but discrimination (AUROC) also declines because the confidence token entropy fails to rise, restricting the policy's exploration over confidence values.}
+    \label{fig:rlcr_training_calibration}
+\end{figure}
+
 
 To better understand why this concentration persists during training,
 we formulate confidence generation as action selection under a
@@ -283,6 +287,7 @@ Define the fixed expected reward $u_i=-\mathbb E[(c_i-Z)^2\mid x]$.
 Let $J_x(\eta)=\sum_i\pi_i u_i$ and
 $\Delta_x=\max_i u_i-\min_i u_i$. Then
 \begin{equation}
+    \label{eq:logit_gradient}
     \frac{\partial J_x}{\partial\eta_i}=\pi_i(u_i-J_x),
     \qquad
     \left|\frac{\partial J_x}{\partial\eta_i}\right|
@@ -290,30 +295,48 @@ $\Delta_x=\max_i u_i-\min_i u_i$. Then
 \end{equation}
 If $\pi_k=1-\varepsilon$ for some $k\in\{1,\ldots,K\}$, then
 \begin{equation}
+    \label{eq:logit_gradient_bound}
     \|\nabla_\eta J_x\|_1\leq 2\varepsilon\Delta_x.
 \end{equation}
 \end{proposition}
-Proposition~\ref{prop:confidence_saturation} shows that a rarely sampled
-confidence value has a small expected logit gradient even when choosing it
-would improve the expected reward. As the confidence distribution concentrates
-on a single value, the entire logit gradient vanishes, including when that
-value is suboptimal.
+Proposition~\ref{prop:confidence_saturation} shows that the logit gradient for
+any confidence action $c_i$ is directly scaled by its sampling probability
+$\pi_i$ (Eq.~\ref{eq:logit_gradient}). Consequently, a rarely sampled
+confidence value receives a negligible gradient even when choosing it would
+yield a higher expected reward. Furthermore, when the policy heavily
+concentrates on a single value ($\pi_k=1-\varepsilon$ with $\varepsilon\ll 1$),
+Eq.~\ref{eq:logit_gradient_bound} bounds the overall logit gradient norm by
+$2\varepsilon\Delta_x$. As $\varepsilon\to 0$, the entire logit gradient
+vanishes, preventing the model from escaping a suboptimal confidence prior.
 A concentrated confidence distribution therefore impedes exploration of
 better-calibrated outputs, consistent with the persistently low
-distinct-value count and confidence token entropy in
-Figure~\ref{fig:rlcr_training_calibration}(b).
+confidence token entropy observed in
+Figure~\ref{fig:rlcr_training_calibration}.
 We provide the proof in Appendix~\ref{sec:confidence_saturation_proof}.
 
+
+
+
+\begin{wrapfigure}{r}{0.4\linewidth}
+    % \vspace{-10pt}
+    \setlength{\abovecaptionskip}{4pt}
+    \centering
+    \includegraphics[width=\linewidth]{figures/rlcr_test_calibration.pdf}
+    \caption{Performance comparison on Math500 and MinervaMath of RLCR on
+    Qwen3-8B. Mean confidence shifts far less than Pass@1 between the two
+    tasks.}
+    \label{fig:rlcr_test_calibration}
+\end{wrapfigure}
 
 
 \paragraph{Persistent confidence concentration hinders downstream calibration.}
 We evaluate the final RLCR checkpoint on Math500 and MinervaMath,
 two datasets of contrasting difficulty.
 As shown in Figure~\ref{fig:rlcr_test_calibration}, the post-RL model
-underestimates its accuracy on Math500 (90.5\% Pass@1 vs.\ 84.5\% mean
-confidence) but is overconfident on MinervaMath (36.7\% Pass@1
+underestimates its accuracy on Math500 (90.8\% Pass@1 vs.\ 84.5\% mean
+confidence) but is overconfident on MinervaMath (51.7\% Pass@1
 vs.\ 74.8\% mean confidence).
-Despite a 53.8-point gap in Pass@1 between the two tasks, mean
+Despite a 39.1-point gap in Pass@1 between the two tasks, mean
 confidence differs by only 9.7 points. The three most frequent values
 still account for 82.25\% and 69.49\% of outputs on Math500 and
 MinervaMath, respectively.
@@ -332,40 +355,26 @@ incorrect responses observed in Figure~\ref{fig:initial_confidence_prior}.
 For any $\delta>0$, let $m_\delta(x)=\Pr(|C-p_x|<\delta\mid x)$.
 Then
 \begin{equation}
+    \label{eq:brier_lower_bound}
     \mathbb E[(C-Z)^2\mid x]
     \geq p_x(1-p_x)+\delta^2\bigl(1-m_\delta(x)\bigr).
 \end{equation}
 \end{proposition}
-Proposition~\ref{prop:confidence_support} shows that the lower bound on
-Brier loss increases as $m_\delta(x)$ decreases, so concentration hurts
-calibration whenever the retained values lie far from $p_x$.
+Proposition~\ref{prop:confidence_support} decomposes the expected Brier loss
+into the irreducible uncertainty $p_x(1-p_x)$, which no confidence policy can
+reduce, and an excess penalty $\delta^2(1-m_\delta(x))$
+(Eq.~\ref{eq:brier_lower_bound}). When the confidence distribution concentrates
+far from the true success probability $p_x$, the probability mass around $p_x$
+vanishes ($m_\delta(x)\to 0$) and this penalty rises to $\delta^2$, so retaining
+only values distant from $p_x$ inflates the best achievable Brier loss no matter
+how the calibration reward reweights them.
 In Appendix~\ref{sec:confidence_support_proof}, we provide the detailed
 proof, extend the bound to a restricted confidence support, and show
 that limited support similarly raises the expected error of the
-confidence value closest to $p_x$ among $G$ samples.
+confidence value closest to $p_x$ among the $G$ responses sampled per
+question.
 
 
-
-\begin{figure}[t]
-    \centering
-    \begin{minipage}[t]{0.60\linewidth}
-        \vspace{0pt}
-        \includegraphics[width=\linewidth]{figures/rlcr_motivation.pdf}
-        \caption{Training dynamics of RLCR on Qwen3-8B.
-        (a) Brier loss. (b) Distinct confidence per question
-        (blue) and confidence token entropy
-        (orange). RLCR reduces Brier loss but confidence exploration
-        remains narrow.}
-        \label{fig:rlcr_training_calibration}
-    \end{minipage}\hfill
-    \begin{minipage}[t]{0.38\linewidth}
-        \vspace{0pt}
-        \includegraphics[width=\linewidth]{figures/rlcr_test_calibration.pdf}
-        \caption{Performance comparison on Math500 and MinervaMath of RLCR on Qwen3-8B.
-        Confidence differs little despite their large accuracy gap.}
-        \label{fig:rlcr_test_calibration}
-    \end{minipage}
-\end{figure}
 
 \section{Method}
 
@@ -529,10 +538,10 @@ single node with eight NVIDIA B20Z GPUs.  We report our hyperparameter setting a
  As shown in Table~\ref{tab:main_results}, initializing RL from CalibSFT
 reduces Brier score and ECE and increases AUROC across all five confidence-aware RL
 baselines on both mathematical and general-reasoning benchmarks.
-As a concrete example, CalibSFT reduces DCPO's ECE from 44.59 to 20.25 while lifting its
-AUROC from 64.19 to 74.73 on MinervaMath.
+As a concrete example, CalibSFT reduces DCPO's ECE from 29.05 to 8.83 while lifting its
+AUROC from 63.57 to 76.00 on MinervaMath.
 Moreover, these calibration gains come without sacrificing accuracy. The average Pass@1 improves by
-1.19 points in-distribution and 1.49 points out-of-distribution across the five methods.
+1.20 points in-distribution and 1.49 points out-of-distribution across the five methods.
 We provide detailed per-dataset results in Table~\ref{tab:appendix_id_results}-\ref{tab:appendix_ood_results} (Appendix~\ref{sec:per_dataset_results}).
 Overall, these results establish CalibSFT as a plug-and-play initialization that consistently
 strengthens confidence-aware RL for better calibration.
@@ -540,51 +549,12 @@ strengthens confidence-aware RL for better calibration.
 
 \paragraph{CalibSFT and RL contribute complementary gains.}
 To disentangle their contributions, we compare CalibSFT and RLVR individually.
-CalibSFT alone substantially mitigates overconfidence, with ECE dropping from 36.26 to 14.82 in-distribution and from 46.94 to 24.16 out-of-distribution.
+CalibSFT alone substantially mitigates overconfidence, with ECE dropping from 34.36 to 14.23 in-distribution and from 46.94 to 25.49 out-of-distribution.
 In contrast, Base and RLVR remain severely miscalibrated, indicating that answer correctness alone is insufficient to reshape confidence.
-However, calibration does not imply better confidence ranking: CalibSFT's OOD AUROC even declines slightly from 65.71 to 61.38, reflecting the limited generalization of supervised training. 
+However, calibration does not imply better confidence ranking: CalibSFT's OOD AUROC even declines from 65.71 to 61.20, reflecting the limited generalization of supervised training.
 Confidence-aware RL fills exactly this gap by directly optimizing discrimination, and combining it with CalibSFT yields the strongest overall performance.
 
-\begin{table*}[t]
-    \centering
-    \caption{Performance comparison on in-distribution and out-of-distribution benchmarks. Each entry
-    averages the datasets within the corresponding split. CalibSFT
-    initialization achieves notably better calibration, discrimination, and Pass@1 for
-    all RL baseline.}
-    \label{tab:main_results}
-    \resizebox{0.98\textwidth}{!}{%
-    \renewcommand\arraystretch{1.0}
-    \begin{tabular}{lcccccccc}
-        \toprule
-        & \multicolumn{4}{c}{In-distribution} & \multicolumn{4}{c}{Out-of-distribution} \\
-        \cmidrule(lr){2-5} \cmidrule(lr){6-9}
-        Method & Pass@1 $\uparrow$ & AUROC $\uparrow$ & Brier $\downarrow$
-        & ECE $\downarrow$
-        & Pass@1 $\uparrow$ & AUROC $\uparrow$ & Brier $\downarrow$
-        & ECE $\downarrow$ \\
-        \midrule
-        Base & 57.39 & 71.47 & 34.97 & 36.26 & 45.36 & \textbf{65.71} & 45.15 & 46.94 \\
-        RLVR & \textbf{61.60} & 73.16 & 33.48 & 34.08 & 43.88 & 64.19 & 50.29 & 51.52 \\
-        \rowcolor{calibrow} CalibSFT & 56.20 & \textbf{79.25} & \textbf{18.01} & \textbf{14.82} & \textbf{45.91} & 61.38 & \textbf{28.25} & \textbf{24.16} \\
-        \midrule
-        RLCR & 62.71 & 82.78 & 15.60 & 16.84 & 43.96 & 69.38 & 31.14 & 31.17 \\
-        \rowcolor{calibrow} + CalibSFT & \textbf{64.70} & \textbf{86.88} & \textbf{13.48} & \textbf{10.84} & \textbf{45.71} & \textbf{71.31} & \textbf{23.24} & \textbf{18.20} \\
-        \midrule
-        ReDoubt & 63.08 & 81.70 & 15.94 & 18.85 & 43.71 & 69.88 & 25.07 & 23.98 \\
-        \rowcolor{calibrow} + CalibSFT & \textbf{64.99} & \textbf{88.33} & \textbf{13.00} & \textbf{16.20} & \textbf{45.55} & \textbf{73.93} & \textbf{22.42} & \textbf{18.89} \\
-        \midrule
-        CoCA & 61.11 & 80.59 & 17.25 & 21.75 & 43.68 & 66.79 & 26.67 & 24.12 \\
-        \rowcolor{calibrow} + CalibSFT & \textbf{62.65} & \textbf{86.31} & \textbf{16.40} & \textbf{20.21} & \textbf{45.55} & \textbf{71.21} & \textbf{22.95} & \textbf{18.89} \\
-        \midrule
-        DCPO & 61.98 & 78.16 & 16.38 & 14.68 & 43.99 & 68.13 & 32.85 & 32.41 \\
-        \rowcolor{calibrow} + CalibSFT & \textbf{62.40} & \textbf{85.16} & \textbf{13.29} & \textbf{12.20} & \textbf{44.82} & \textbf{72.75} & \textbf{21.73} & \textbf{17.31} \\
-        \midrule
-        C3RL & 63.22 & 67.90 & 27.80 & 30.45 & 43.44 & 62.19 & 45.54 & 48.00 \\
-        \rowcolor{calibrow} + CalibSFT & \textbf{63.32} & \textbf{80.88} & \textbf{15.65} & \textbf{15.18} & \textbf{44.60} & \textbf{63.03} & \textbf{23.89} & \textbf{17.38} \\
-        \bottomrule
-    \end{tabular}
-    }
-\end{table*}
+\input{main_results.tex}
 
 
 \subsection{Calibration Analysis}
@@ -626,7 +596,7 @@ Prior work observes that confidence estimates often concentrate on a few dominan
 To examine whether CalibSFT initialization alleviates this concentration, we compare RLCR, CoCA, and DCPO on MinervaMath, with and without CalibSFT.
 As shown in Figure~\ref{fig:confidence_distribution}, all three methods trained from Base exhibit heavy peaks at a few high-confidence values, while initializing from CalibSFT flattens these peaks and aligns the mean confidence with the actual accuracy.
 As a result, CalibSFT alleviates both concentration and overconfidence and lowers ECE for all three methods.
-For example, DCPO's dominant peak near high confidence is redistributed toward lower values while accuracy is preserved, lowering ECE from 44.59\% to 28.35\%.
+For example, DCPO's dominant peak near high confidence is redistributed toward lower values while accuracy is preserved, lowering ECE from 29.05\% to 15.58\%.
 These results suggest that CalibSFT initialization not only calibrates the SFT stage but also propagates lower concentration and better calibration into the downstream RL policy.
 
 \begin{table*}[t]
@@ -643,9 +613,15 @@ These results suggest that CalibSFT initialization not only calibrates the SFT s
 \cmidrule(lr){2-3} \cmidrule(lr){4-5} \cmidrule(lr){6-7} \cmidrule(lr){8-9}
 Confidence Format & Base & +Ours & Base & +Ours & Base & +Ours & Base & +Ours \\
 \midrule
-Probability $\{0.00, 0.01, \ldots, 1.00\}$ & 16.64 & \textbf{10.83} & 82.05 & \textbf{86.88} & 32.81 & \textbf{18.20} & 68.72 & \textbf{71.31} \\
-Probability $\{0.00, 0.05, \ldots, 1.00\}$ & 16.64 & \textbf{14.39} & 82.05 & \textbf{86.77} & 32.81 & \textbf{19.30} & 68.72 & \textbf{71.23} \\
-Integer (0--9) & 16.91 & \textbf{15.84} & 78.86 & \textbf{84.85} & 26.31 & \textbf{16.70} & 67.00 & \textbf{69.36} \\
+% Rows 1--3 use the corrected mathematics grading. The linguistic row still carries the
+% pre-correction numbers, since that run lives on another machine, so it is not comparable to the
+% rows above it. Runs, all at step 160: 0830-053301 (probability, shared by rows 1--2 as the base),
+% 0909-075139 and 0906-152554 (probability, CalibSFT), 0906-151554 and 0907-040256 (digit).
+% Three transcription errors were also corrected here: the coarse-grid OOD ECE and AUROC read
+% 19.30 and 71.23 for 17.30 and 72.23, and the integer OOD AUROC read 69.36 for 66.36.
+Probability $\{0.00, 0.01, \ldots, 1.00\}$ & 14.05 & \textbf{8.59} & 81.81 & \textbf{86.32} & 32.81 & \textbf{18.20} & 68.72 & \textbf{71.31} \\
+Probability $\{0.00, 0.05, \ldots, 1.00\}$ & 14.05 & \textbf{12.13} & 81.81 & \textbf{86.05} & 32.81 & \textbf{19.30} & 68.72 & \textbf{71.23} \\
+Integer (0--9) & 14.69 & \textbf{18.66} & 79.00 & \textbf{84.14} & 26.31 & \textbf{16.70} & 67.00 & \textbf{69.36} \\
 Linguistic (low / medium / high) & 17.71 & \textbf{15.90} & 73.56 & \textbf{79.58} & 24.06 & \textbf{20.31} & 64.20 & \textbf{67.73} \\
 \bottomrule
 \end{tabular}}
@@ -668,16 +644,16 @@ Linguistic (low / medium / high) & 17.71 & \textbf{15.90} & 73.56 & \textbf{79.5
         & DROP & HotpotQA & NQOpen & Average \\
         \midrule
          & RLCR
-        & 8.09 & 22.63 & 40.72 & 19.92 & 26.41 & 38.25 & 26.00 \\
+        & 7.84 & 17.69 & 30.34 & 19.92 & 26.41 & 38.25 & 23.41 \\
         \rowcolor{calibrow} \cellcolor{white}\multirow{-2}{*}{ECE $\downarrow$} & +CalibSFT
-        & \textbf{5.44} & \textbf{12.73} & \textbf{20.74}
-        & \textbf{13.30} & \textbf{13.04} & \textbf{22.77} & \textbf{14.67} \\
+        & \textbf{5.34} & \textbf{7.76} & \textbf{12.74}
+        & \textbf{13.30} & \textbf{13.04} & \textbf{22.77} & \textbf{12.49} \\
         \midrule
          & RLCR
-        & 74.96 & 83.64 & 67.71 & 60.60 & 60.48 & 76.85 & 70.71 \\
+        & 75.47 & 83.24 & 66.29 & 60.60 & 60.48 & 76.85 & 70.49 \\
         \rowcolor{calibrow} \cellcolor{white}\multirow{-2}{*}{AUROC $\uparrow$} & +CalibSFT
-        & \textbf{80.23} & \textbf{88.20} & \textbf{71.44}
-        & \textbf{65.45} & \textbf{62.66} & \textbf{77.13} & \textbf{74.69} \\
+        & \textbf{80.34} & \textbf{87.35} & \textbf{70.75}
+        & \textbf{65.45} & \textbf{62.66} & \textbf{77.13} & \textbf{73.95} \\
         \bottomrule
     \end{tabular}}
 \end{table*}
@@ -703,7 +679,7 @@ The reduction in ECE is largest with the fine probability grid, whose granularit
 
 \paragraph{CalibSFT is agnostic to the base model.}
 To examine the transferability of CalibSFT across model architectures, we train Gemma4-E2B~\citep{team2026gemma} using RLCR with CalibSFT, and then evaluate it on three ID and three OOD benchmarks spanning a range of difficulty. 
-As shown in Table~\ref{tab:gemma_calibsft}, CalibSFT improves both ECE and AUROC on all benchmarks, halving the average ECE from 26.00 to 14.67 and raising the average AUROC from 70.71 to 74.69. 
+As shown in Table~\ref{tab:gemma_calibsft}, CalibSFT improves both ECE and AUROC on all benchmarks, halving the average ECE from 23.41 to 12.49 and raising the average AUROC from 70.49 to 73.95. 
 These results indicate that the calibration benefit of CalibSFT holds across model families on benchmarks of varying difficulty.
 
 
@@ -799,7 +775,7 @@ acknowledgments, including those to funding agencies, go at the end of the paper
 
 \section{Related Work}
 
-\paragraph{Confidence estimation for LLMs.}
+\paragraph{Confidence estimation in LLMs.}
 Confidence estimates for a model answer can be derived from many signals, of which four
 families cover most existing methods and differ in what they require at inference
 time~\citep{geng2024survey,liu2025uncertainty}. The most direct signal is the probability
@@ -957,7 +933,7 @@ anywhere in the group.
 We analyze the unrounded targets under the original sampling distribution,
 before response filtering and target balancing.
 The random variables $Q_x$ and $C^{\star}_i$ correspond to the observed
-$q_x$ and $c^{\star}_i$ in Equation~\ref{eq:calibsft_target}.
+$q_x$ and $c^{\star}_i$ in Eq.~\ref{eq:calibsft_target}.
 
 \begin{proof}[Proof of Proposition~\ref{prop:confidence_target_moments}]
 Fix $x$ and write $v_x=p_x(1-p_x)$.
@@ -1234,9 +1210,12 @@ compare the same quantities under both initializations.
 As shown in Figures~\ref{fig:training_dynamics_calibration}
 and~\ref{fig:training_dynamics_support}, we observe the
 same phenomenon as in Section~\ref{sec:motivation}. Between the first and
-last ten steps, Brier loss falls for RLCR (0.266 to 0.224) and CoCA
-(0.255 to 0.221) and stays nearly flat for DCPO (0.246 to 0.241), so each
-objective either improves calibration or holds it steady. Confidence
+last ten steps, Brier loss falls for RLCR (26.6 to 22.4) and CoCA
+(25.5 to 22.1) and stays nearly flat for DCPO (24.6 to 24.1), and ECE falls
+in all three runs (25.8 to 8.2, 24.8 to 7.8, and 23.8 to 14.2), so each
+objective either improves calibration or holds it steady. Discrimination
+moves the other way, with AUROC falling in every run (70.8 to 66.9, 72.2 to
+68.0, and 73.5 to 64.1). Confidence
 support does not follow. The mean number of distinct confidence values
 within a group of eight responses never exceeds 5.3 at any step of the
 three base-initialized runs, and confidence token entropy ends below where
@@ -1252,22 +1231,26 @@ entropy rises from 0.16--0.27 to 0.61--0.90. This gap holds at every step:
 each CalibSFT-initialized run samples at least 5.39 distinct values per
 question, above the maximum of 5.25 reached by any base-initialized run.
 Brier loss of each CalibSFT-initialized run stays below that of its
-base-initialized counterpart for 88\% to 94\% of training steps in
-five-step means, while accuracy remains nearly unchanged, with its average
-over training differing by at most 0.002.
+base-initialized counterpart for 90\% to 97\% of training steps in
+eleven-step means, and AUROC stays above its counterpart for 91\% to 100\% of
+steps, raising its average over training by 3.4 points for RLCR, 5.4 for CoCA,
+and 6.9 for DCPO. Accuracy remains nearly unchanged, with its average over
+training differing by at most 0.2 points.
 
-% One float keeps Figures training_dynamics_calibration and training_dynamics_support together.
 \begin{figure}[tbp]
     \centering
     \includegraphics[width=\linewidth]{figures/training_dynamics_calibration.pdf}
-    \caption{Brier loss (top) and accuracy (bottom) during training of RLCR,
-    CoCA, and DCPO with and without CalibSFT initialization. Faint curves show
-    per-step measurements and bold curves centered five-step means. Statistics
+    \caption{Brier loss, ECE, AUROC, and accuracy during
+    training of RLCR, CoCA, and DCPO with and without CalibSFT initialization.
+    Curves are centered eleven-step means and bands one standard deviation
+    within each window. Statistics
     use the groups retained by the corresponding training run, so the sampled
     questions and responses change across steps.}
     \label{fig:training_dynamics_calibration}
+\end{figure}
 
-    \vspace{1.5em}
+\begin{figure}[tbp]
+    \centering
     \includegraphics[width=\linewidth]{figures/training_dynamics_support.pdf}
     \caption{Distinct confidence values per question (left axis) and
     confidence token entropy (right axis) during training of RLCR, CoCA, and
@@ -1277,12 +1260,32 @@ over training differing by at most 0.002.
     \label{fig:training_dynamics_support}
 \end{figure}
 
-% \subsection{Additional Models and Sampling Settings}
-% \textbf{[TODO:]} Add the motivation analysis for additional model families and
-% sampling settings once those evaluation runs are complete.
 
-\textbf{[TODO:]} Report the mean and standard deviation of evaluation
-metrics across training seeds.
+\subsection{Stability Across Training Seeds}
+\label{sec:seed_stability}
+
+The main results report one run per method. To check that the gains from
+CalibSFT exceed the run-to-run variation of training, we repeat RLCR on
+Qwen3-8B twice per arm and evaluate every run under the protocol of
+Table~\ref{tab:main_results}. The two arms repeat different stages: the RLCR
+rows vary the RL seed, whereas the CalibSFT rows vary the CalibSFT seed and
+keep the RL seed fixed, which isolates the stage we introduce while leaving
+the shared RL stage unchanged.
+
+Table~\ref{tab:seed_stability} reports the split averages as the mean over
+runs with the standard deviation as a subscript. Every standard deviation is
+at most $1.15$ points except in-distribution ECE, whose $2.51$ points reflect
+the two CalibSFT runs reaching $8.59$ and $12.13$. Comparing the two
+arms run by run, the ranges do not overlap on any calibration or discrimination
+metric: the worst CalibSFT run still reaches an AUROC of $86.05$
+in-distribution and $71.31$ out-of-distribution against best RLCR runs of
+$82.36$ and $69.38$, and its out-of-distribution ECE of $18.20$ remains
+$12.97$ points below the best RLCR run. In-distribution Pass@1 is the one
+metric whose ranges overlap, $65.33$--$66.27$ for RLCR against
+$65.90$--$67.20$ with CalibSFT, consistent with CalibSFT improving calibration
+without trading away accuracy.
+
+\input{seed_stability}
 
 \subsection{Ablation Studies}
 \label{sec:ablation_studies}
@@ -1375,7 +1378,7 @@ intervals across the five methods.
         SaySelf & -- & 41.33 & 57.69 & 39.38 \\
         LoVeC & 75.40 & 24.71 & 71.11 & 32.32 \\
         \rowcolor{calibrow} CalibSFT & \textbf{100.00} & \textbf{7.92}
-        & \textbf{79.25} & \textbf{18.01} \\
+        & \textbf{79.93} & \textbf{17.30} \\
         \bottomrule
     \end{tabular}}
     \end{minipage}\hfill
@@ -1398,7 +1401,7 @@ intervals across the five methods.
         \midrule
         0 & 68.10 & 32.49 & 59.20 & 38.92 \\
         0.25 & 78.02 & 18.83 & 66.88 & 29.94 \\
-        \rowcolor{calibrow} 0.5 & \textbf{79.25} & \textbf{18.01} & \textbf{67.81} & 30.82 \\
+        \rowcolor{calibrow} 0.5 & \textbf{79.93} & \textbf{17.30} & \textbf{67.81} & 30.82 \\
         0.75 & 75.93 & 20.00 & 65.82 & \textbf{28.37} \\
         1 & 73.29 & 19.90 & 57.22 & 35.72 \\
         \bottomrule
@@ -1447,13 +1450,13 @@ benchmarks among the tested settings, so we use $\lambda=0.5$ as the default.
         Confidence-only & -- & -- & $\checkmark$ & $\checkmark$ & --
         & 43.56 & 74.62 & 20.97 & 17.43 \\
         Full-CE & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ & --
-        & 65.49 & 61.66 & 29.29 & 27.65 \\
+        & 58.49 & 61.66 & 29.29 & 27.65 \\
         Full-Balanced & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$
-        & 65.46 & 76.67 & 19.04 & 15.87 \\
+        & 58.46 & 76.67 & 19.04 & 16.87 \\
         Correct-only & $\checkmark$ & -- & $\checkmark$ & -- & $\checkmark$
-        & \textbf{66.19} & 77.58 & 18.95 & 16.28 \\
+        & \textbf{59.89} & 77.58 & 18.95 & 16.98 \\
         \rowcolor{calibrow} CalibSFT & $\checkmark$ & -- & $\checkmark$ & $\checkmark$ & $\checkmark$
-        & 65.79 & \textbf{79.25} & \textbf{18.01} & \textbf{14.82} \\
+        & 58.51 & \textbf{79.93} & \textbf{17.30} & \textbf{15.95} \\
         \bottomrule
     \end{tabular}%
     }
@@ -1483,19 +1486,103 @@ confidence-aware RL.
 
 \subsection{Results under Additional Metrics}
 \label{sec:confidence_distributions}
-\textbf{[TODO:]} Report the same comparisons under three additional families of
-metrics. (i) Accuracy: Pass@$k$ in addition to Pass@1, with $k=4$ on the
-non-AIME benchmarks and $k=32$ on AIME. (ii) Calibration: MacroCE, adaptive
-ECE, and the Brier decomposition into calibration and refinement terms,
-together with their definitions, aggregation protocols, and ECE sensitivity to
-10, 15, and 20 bins. Selective answering belongs here as well: risk--coverage
-curves with AURC and E-AURC, and accuracy at matched coverage, which measure the
-same ranking as AUROC without committing to a threshold. The thresholds
-themselves, chosen with a guarantee, are studied in
-Appendix~\ref{sec:selective_risk_control}. (iii) Confidence diversity: the number of
-distinct confidence values, Top-1 and Top-3 confidence mass, confidence
-entropy, and effective number of values, reported per dataset and as ID/OOD
-averages.
+
+The main results report Pass@1, AUROC, Brier score, and ECE. We repeat the
+comparison under two further families of metrics, one for calibration and
+failure prediction and one for confidence diversity. Both are computed from the
+responses already sampled for Table~\ref{tab:main_results}, so no model is
+re-evaluated.
+
+\paragraph{Calibration and failure prediction.}
+\begin{itemize}
+    \item \textbf{Positive Calibration Error (PCE)}~\citep{ma2026decoupling}
+    restricts ECE to the bins whose mean confidence exceeds their accuracy,
+    keeping the denominator at the full number of responses, so it isolates the
+    overconfident half of the calibration error.
+
+    \item \textbf{Capability Brier score}~\citep{yang2026calibration} scores a
+    question's mean confidence against its rollout success rate rather than
+    against the correctness of a single response, measuring how well confidence
+    tracks the model's expected accuracy on that question.
+
+    \item \textbf{E-AURC}~\citep{geifman2019bias} subtracts from the area under
+    the risk--coverage curve the area a perfect ranking would attain at the same
+    accuracy. We report it rather than AURC because AURC's floor is set by
+    accuracy, which Table~\ref{tab:main_results} already reports, and because
+    ranking metrics are otherwise hard to compare across models of differing
+    accuracy~\citep{ding2020revisiting}.
+
+    \item \textbf{RCE}~\citep{huang2024uncertainty} measures the deviation from
+    a monotone correspondence between confidence and expected correctness,
+    estimated over equal-mass bins, and is designed to be insensitive to both
+    the output range of the confidence measure and the accuracy of the
+    underlying model.
+\end{itemize}
+
+Two caveats apply to the capability Brier score. It estimates each question's
+success rate from the four sampled responses, or 32 on AIME, whereas the metric
+was introduced with 100 samples, so it is a coarse estimate of capability here.
+It also shares its reference signal with the CalibSFT target
+$c^{\star}_i=\lambda q_x+(1-\lambda)z_i$, which is built from the training-set
+success rate; the two are computed on disjoint questions, but the metric is by
+construction aligned with what CalibSFT supervises, so we read it alongside the
+other three rather than on its own.
+
+\input{additional_metrics}
+
+Table~\ref{tab:additional_metrics} shows the same pattern as the main results.
+Across the five RL objectives, the two splits, and the four metrics, CalibSFT
+initialization wins 39 of the 40 comparisons. The one exception is the
+in-distribution PCE of CoCA, which rises from $10.96$ to $11.40$.
+The largest and most consistent gap is in RCE: out of distribution it falls
+from $11.45$ to $4.93$ for RLCR, from $14.77$ to $4.70$ for ReDoubt, from
+$15.13$ to $5.79$ for CoCA, and from $15.40$ to $6.18$ for DCPO, roughly a
+third of its value in each case. Since RCE is constructed to be independent of
+the accuracy of the underlying model, this gap cannot be attributed to the
+accuracy differences between the two initializations.
+PCE moves in the same direction and by a wide margin out of distribution,
+falling from $31.97$ to $12.95$ for DCPO and from $47.96$ to $8.80$ for C3RL,
+which shows that the calibration gains of CalibSFT come from removing
+overconfidence rather than from trading it against underconfidence.
+
+\paragraph{Confidence diversity.}
+\begin{itemize}
+    \item \textbf{Distinct} counts the confidence values a model produces over
+    the responses of a split, measuring the size of the support regardless of
+    how often each value is used.
+
+    \item \textbf{Top-1} and \textbf{Top-3} are the share of responses taking
+    the most frequent one and three values, the same quantity reported for the
+    confidence priors in Figure~\ref{fig:initial_confidence_prior}.
+
+    \item \textbf{Effective} is the exponential of the entropy of the value
+    distribution, that is, the number of values that would carry the same mass
+    if they were used uniformly. It complements Distinct, which a value used
+    once inflates as much as a value used by half the responses.
+\end{itemize}
+
+We do not report the mass at the ends of the scale or the fraction of occupied
+confidence bins. The former is near zero for most runs, since the concentrated
+priors of Figure~\ref{fig:initial_confidence_prior} sit below the ceiling rather
+than at it, and the latter reduces to Distinct once the bins are fine enough to
+separate values on the two-decimal grid the models emit.
+
+\input{diversity_metrics}
+
+Table~\ref{tab:diversity_metrics} shows that CalibSFT broadens confidence
+support for every objective and on both splits, with no exceptions among the 40
+comparisons. The clearest case is RLCR out of distribution, where the number of
+distinct values rises from $18.62$ to $94.50$ while the three most frequent
+values fall from $66.22\%$ of responses to $9.90\%$, and the effective number of
+values rises from $7.03$ to $72.83$. Distinct and Effective move together
+throughout, so the broader support is not an artifact of rarely used values:
+the added values carry mass. C3RL is the one objective whose support stays
+narrow, at $10.00$ distinct values, yet even there the most frequent value
+drops from $71.04\%$ to $36.37\%$ of responses, which raises its effective
+support from $2.79$ to $6.46$. Read together with
+Table~\ref{tab:additional_metrics}, the objectives that gain the most support
+are also those whose RCE improves the most, consistent with the exploration
+argument of Section~\ref{sec:motivation}.
 
 \subsection{Integration with Other Confidence Estimators}
 \label{sec:confidence_estimators}
@@ -1527,14 +1614,14 @@ correctness, and the sampling protocol match Table~\ref{tab:main_results}.
 
 Table~\ref{tab:confidence_estimators} reports both estimators next to verbalized
 confidence. CalibSFT initialization improves every metric under every estimator
-on both splits. Under token probability, AUROC rises from 84.13 to 88.24
+on both splits. Under token probability, AUROC rises from 83.60 to 87.66
 in-distribution and Brier score falls from 31.22 to 22.80 out-of-distribution;
-under self-consistency, ECE falls from 19.68 to 11.83 and from 30.53 to 18.18.
+under self-consistency, ECE falls from 17.62 to 9.67 and from 30.53 to 18.19.
 The estimators themselves differ in what they add. Token probability raises
-AUROC by about 1.4 points in-distribution over the verbalized value it is read
+AUROC by about 1.3 points in-distribution over the verbalized value it is read
 from, for both initializations. Self-consistency raises majority-vote accuracy
 and lowers Brier score, but its ECE stays above the verbalized value
-in-distribution, 19.68 against 16.84 without CalibSFT and 11.83 against 10.84
+in-distribution, 17.62 against 14.46 without CalibSFT and 9.67 against 8.59
 with it.
 
 \input{confidence_estimators.tex}
@@ -1547,19 +1634,18 @@ in-distribution and three out-of-distribution benchmarks, computed from the
 responses of the main evaluation over ten equal-width confidence intervals.
 
 CalibSFT reduces miscalibration in both directions. Where RLCR is overconfident,
-its mean confidence exceeds its accuracy by 38.1 points on MinervaMath, 52.4 on
+its mean confidence exceeds its accuracy by 23.0 points on MinervaMath, 52.4 on
 NQOpen, and 29.1 on LiveBenchReasoning, and the bars move toward the diagonal
-once RL starts from CalibSFT: ECE falls from 38.12 to 26.33 on MinervaMath and
+once RL starts from CalibSFT: ECE falls from 23.05 to 12.00 on MinervaMath and
 from 52.43 to 30.89 on NQOpen. Where RLCR is underconfident, on MATH-500, its
-accuracy exceeds its confidence for $97\%$ of the responses and by 18 points in
-the interval $(0.6,0.7]$; CalibSFT reduces this gap to 6 points at its widest
-and ECE from 7.43 to 3.69. The correction also spreads the responses over more
-intervals: on HotpotQA the share in the top interval falls from $55.7\%$ to
-$10.9\%$, and the number of intervals holding at least $1\%$ of the responses
-rises from six to nine on MinervaMath, HotpotQA, and NQOpen. What remains
-differs by benchmark, as MinervaMath and NQOpen stay overconfident in every
-occupied interval, while LiveBenchReasoning turns underconfident for $95\%$ of
-its responses.
+accuracy exceeds its confidence for $97\%$ of the responses, and CalibSFT lowers
+ECE from 7.53 to 3.89. The correction also spreads the responses over more
+intervals: on TriviaQA the share in the top interval falls from $39.0\%$ to
+$16.4\%$ while ECE falls from 23.30 to 10.71, and the number of intervals
+holding at least $1\%$ of the responses rises from six to nine on MinervaMath
+and NQOpen and from seven to nine on TriviaQA. What remains
+differs by benchmark, as NQOpen stays overconfident in every occupied interval,
+while LiveBenchReasoning turns underconfident for $95\%$ of its responses.
 
 \begin{figure}[t]
     \centering
@@ -1647,22 +1733,27 @@ conservative even when the ranking is informative.
 
 Table~\ref{tab:risk_control} reports the coverage that this procedure certifies.
 At a $10\%$ risk budget in-distribution, CalibSFT initialization raises certified
-coverage for every method, from 31.3 to 59.7 for RLCR and from 28.8 to 64.9 for
-ReDoubt, and it certifies CoCA and C3RL at 49.9 and 49.2 where no threshold
+coverage for every method, from 31.4 to 62.6 for RLCR and from 28.8 to 66.1 for
+ReDoubt, and it certifies CoCA and C3RL at 52.3 and 49.2 where no threshold
 passes without it. Out-of-distribution the separation is sharper: at a $20\%$
 budget none of the five methods admits any certified threshold, while CalibSFT
 initialization certifies all five between 16.8 and 22.8. The remaining gap to a
-perfect ranking of the same responses, 80.4 in-distribution and 54.5 out-of-distribution,
+perfect ranking of the same responses, 82.0 in-distribution and 54.5 out-of-distribution,
 shows how much of the loss comes from the task rather than from the procedure; at
 a $10\%$ budget out-of-distribution, where a perfect ranking would certify only
-48.9, no configuration passes. The realized error rate on held-out questions
-stays below the budget in every configuration, reaching at most 9.5 and 18.2.
+48.4, no configuration passes. At a $10\%$ budget in-distribution and at a $20\%$
+budget out-of-distribution, the realized error rate on held-out questions stays
+below the budget in every configuration, reaching at most 9.4 and 18.2. At a
+$20\%$ budget in-distribution four configurations exceed it on a minority of the
+calibration splits, by at most 3.5 points, which is what a guarantee that holds
+with probability $1-\delta$ allows.
 Figure~\ref{fig:risk_control} sweeps the budget and shows where the two
 initializations differ. Without CalibSFT, certified coverage climbs in steps and
 jumps almost vertically for CoCA and C3RL, because the few confidence values the
 model emits leave few usable thresholds; the same sparsity makes the baselines
-vary across calibration splits, by up to 8.0 points for RLCR in-distribution
-against 2.5 with CalibSFT. With CalibSFT the curve rises smoothly, so a threshold
+vary across calibration splits, at a $20\%$ budget in-distribution by 35.3 points
+for C3RL and 12.3 for ReDoubt against 0.5 and 1.2 with CalibSFT. With CalibSFT
+the curve rises smoothly, so a threshold
 exists for any budget a deployment may ask for.
 
 \input{risk_control.tex}
@@ -1678,16 +1769,50 @@ exists for any budget a deployment may ask for.
     \label{fig:risk_control}
 \end{figure}
 
-\subsection{Confidence-Guided Efficient Reasoning}
-\label{sec:efficient_reasoning}
+\subsection{Confidence-Guided Model Routing}
+\label{sec:model_routing}
 
-\textbf{[TODO:]} Answer each question first under a small generation budget and
-re-answer only the questions whose confidence falls below a threshold under the
-full budget. Following the performance-loss guarantees of efficient reasoning,
-choose that threshold on a calibration split so that the accuracy loss against
-always using the full budget stays below a tolerance with probability
-$1-\delta$, and report the generated tokens this saves for confidence-aware RL
-with and without CalibSFT initialization, against fixed-budget and
-random-routing baselines.
+A calibrated confidence also decides which questions a small model should answer
+itself and which it should pass to a stronger one, and a deployment needs that
+decision to come with a bound on what the routing costs in accuracy. Each local
+policy of Table~\ref{tab:main_results} answers every question first, which is
+where its confidence comes from, and a question whose confidence falls below a
+threshold is answered again by Qwen3.7-Flash, a hosted reasoning model; the cost
+a threshold saves is therefore the hosted model's, as the local answer is always
+produced. Following the performance guarantees established for efficient
+reasoning~\citep{yu2026anytime,zeng2025provable} and for risk-aware
+routing~\citep{hao2026racer}, the threshold is selected on a calibration split so
+that the accuracy lost against deferring every question stays below a tolerance
+$\varepsilon$ with probability $1-\delta$. That loss is signed, since the local
+model is sometimes right where Qwen3.7-Flash is wrong, and it takes values in
+$[-1,1]$: a Hoeffding bound on its mean leaves a slack of 7.9 points on our
+2{,}414 calibration questions, so no tolerance near $1\%$ would be testable. We
+therefore bound only the harmful event, an accepted question the local model
+answers incorrectly while Qwen3.7-Flash answers it correctly. Its rate upper
+bounds the loss, ignoring the questions where the local model is the one that is
+right, and it is a Bernoulli mean, so we test it with a Clopper--Pearson
+limit~\citep{clopper1934use} and a union bound over the 102 candidate thresholds
+at $\delta=0.05$, as in Appendix~\ref{sec:selective_risk_control}; with no
+harmful event observed the limit reaches $0.32\%$, which is what makes a $1\%$
+tolerance attainable at all. The pool is the eight mathematics benchmarks of the
+in-distribution split that Qwen3.7-Flash answered, 4{,}828 questions, and each
+question contributes one response, so the counted events are independent draws.
+
+Table~\ref{tab:cascade} reports what the certified threshold costs. At a $1\%$
+tolerance CalibSFT initialization lowers the deferral rate for every method, by
+12.3 points on average, and at a $2\%$ tolerance for three of the four, by 25.1
+points, while the accuracy stays within $0.8$ points of the $82.58\%$ that
+deferring every question reaches. The baselines are not merely more expensive but close to degenerate:
+CoCA defers $98.7\%$ of the questions at both tolerances and DCPO $82.9\%$, so the
+routing avoids $0.6\%$ and $5.6\%$ of the Qwen3.7-Flash tokens, against $33.1\%$
+and $43.5\%$ once RL starts from CalibSFT at the $2\%$ tolerance. The sparsity that
+leaves few usable thresholds in Appendix~\ref{sec:selective_risk_control} leaves
+few usable thresholds here as well. Counting questions also understates what
+routing costs, because the questions a model is unsure about are the ones that
+take the longest to answer: RLCR defers $45.9\%$ of the questions at the $2\%$
+tolerance yet avoids only $23.3\%$ of the Qwen3.7-Flash tokens, and with CalibSFT
+initialization it defers $39.2\%$ and avoids $36.1\%$.
+
+\input{cascade.tex}
 
 \end{document}

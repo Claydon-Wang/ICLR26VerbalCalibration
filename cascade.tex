@@ -1,0 +1,28 @@
+\begin{table*}[t]
+    \centering
+    \caption{Certified deferral to a stronger model for confidence-aware RL with and without CalibSFT initialization. The local model answers a question when its confidence reaches a threshold and defers it to the hosted model otherwise. The threshold is selected on half of the questions so that the accuracy lost against deferring every question stays below the tolerance with probability $0.95$, and what it reaches on the held-out questions is averaged over ten splits. The certificate constrains accuracy, so the accuracy column records that the guarantee was met rather than a quantity being compared; what the threshold trades is cost, reported as the share of questions deferred and the share of the hosted model's tokens it avoids against deferring every question. Deferring every question answers 82.58\% correctly and deferring none answers between 76.3\% and 78.0\% correctly.}
+    \label{tab:cascade}
+    \footnotesize
+    \setlength{\tabcolsep}{5pt}
+    \resizebox{\textwidth}{!}{%
+    \begin{tabular}{lcccccc}
+        \toprule
+        & \multicolumn{3}{c}{Tolerance $\varepsilon=1\%$} & \multicolumn{3}{c}{Tolerance $\varepsilon=2\%$} \\
+        \cmidrule(lr){2-4} \cmidrule(lr){5-7}
+        Method & Deferred (\%) $\downarrow$ & Tokens saved (\%) $\uparrow$ & Accuracy & Deferred (\%) $\downarrow$ & Tokens saved (\%) $\uparrow$ & Accuracy \\
+        \midrule
+        RLCR & 65.0$_{\pm 1.1}$ & 10.1 & 82.97 & 45.9$_{\pm 1.0}$ & 23.3 & 83.33 \\
+        \rowcolor{calibrow} + CalibSFT & \textbf{60.3$_{\pm 3.6}$} & \textbf{17.9} & 82.66 & \textbf{39.2$_{\pm 1.0}$} & \textbf{36.1} & 82.47 \\
+        \midrule
+        ReDoubt & 67.4$_{\pm 0.8}$ & 10.1 & 82.99 & 43.1$_{\pm 1.0}$ & 27.1 & 83.24 \\
+        \rowcolor{calibrow} + CalibSFT & \textbf{55.3$_{\pm 2.7}$} & \textbf{23.8} & 82.81 & \textbf{36.3$_{\pm 3.7}$} & \textbf{42.1} & 82.60 \\
+        \midrule
+        CoCA & 98.7$_{\pm 0.1}$ & 0.6 & 82.61 & 98.7$_{\pm 0.1}$ & 0.6 & 82.61 \\
+        \rowcolor{calibrow} + CalibSFT & \textbf{71.7$_{\pm 4.9}$} & \textbf{17.3} & 82.51 & \textbf{51.2$_{\pm 5.5}$} & \textbf{33.1} & 82.42 \\
+        \midrule
+        DCPO & 82.9$_{\pm 0.7}$ & 5.6 & 82.64 & 82.9$_{\pm 0.7}$ & 5.6 & 82.64 \\
+        \rowcolor{calibrow} + CalibSFT & \textbf{77.4$_{\pm 0.3}$} & \textbf{12.2} & 82.58 & \textbf{33.3$_{\pm 3.8}$} & \textbf{43.5} & 82.80 \\
+        \bottomrule
+    \end{tabular}
+    }
+\end{table*}

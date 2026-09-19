@@ -1,0 +1,40 @@
+\begin{table*}[t]
+    \centering
+    \caption{Performance comparison on in-distribution and out-of-distribution benchmarks. Each entry
+    averages the datasets within the corresponding split. CalibSFT
+    initialization achieves notably better calibration, discrimination, and Pass@1 for
+    all RL baseline.}
+    \label{tab:main_results}
+    \resizebox{0.98\textwidth}{!}{%
+    \renewcommand\arraystretch{1.0}
+    \begin{tabular}{lcccccccc}
+        \toprule
+        & \multicolumn{4}{c}{In-distribution} & \multicolumn{4}{c}{Out-of-distribution} \\
+        \cmidrule(lr){2-5} \cmidrule(lr){6-9}
+        Method & Pass@1 $\uparrow$ & AUROC $\uparrow$ & Brier $\downarrow$
+        & ECE $\downarrow$
+        & Pass@1 $\uparrow$ & AUROC $\uparrow$ & Brier $\downarrow$
+        & ECE $\downarrow$ \\
+        \midrule
+        Base & 59.32 & 71.90 & 33.20 & 34.36 & 45.36 & \textbf{65.71} & 45.15 & 46.94 \\
+        RLVR & \textbf{64.16} & 73.16 & 31.10 & 31.52 & 43.88 & 64.19 & 50.29 & 51.52 \\
+        \rowcolor{calibrow} CalibSFT & 58.51 & \textbf{79.93} & \textbf{17.30} & \textbf{14.23} & \textbf{46.37} & 61.20 & \textbf{29.15} & \textbf{25.49} \\
+        \midrule
+        RLCR & 65.33 & 82.36 & 14.43 & 14.46 & 43.96 & 69.38 & 31.14 & 31.17 \\
+        \rowcolor{calibrow} + CalibSFT & \textbf{67.20} & \textbf{86.32} & \textbf{12.77} & \textbf{8.59} & \textbf{45.71} & \textbf{71.31} & \textbf{23.24} & \textbf{18.20} \\
+        \midrule
+        ReDoubt & 65.59 & 81.05 & 15.48 & 16.94 & 43.71 & 69.88 & 25.07 & 23.98 \\
+        \rowcolor{calibrow} + CalibSFT & \textbf{67.59} & \textbf{86.99} & \textbf{12.90} & \textbf{14.28} & \textbf{45.55} & \textbf{73.93} & \textbf{22.42} & \textbf{18.89} \\
+        \midrule
+        CoCA & 63.62 & 80.66 & 16.31 & 19.95 & 43.68 & 66.79 & 26.67 & 24.12 \\
+        \rowcolor{calibrow} + CalibSFT & \textbf{65.07} & \textbf{85.63} & \textbf{16.06} & \textbf{18.51} & \textbf{45.55} & \textbf{71.22} & \textbf{22.94} & \textbf{18.89} \\
+        \midrule
+        DCPO & 64.68 & 78.21 & 14.69 & 12.16 & 43.99 & 68.13 & 32.85 & 32.41 \\
+        \rowcolor{calibrow} + CalibSFT & \textbf{64.84} & \textbf{85.08} & \textbf{12.83} & \textbf{10.39} & \textbf{44.82} & \textbf{72.75} & \textbf{21.73} & \textbf{17.31} \\
+        \midrule
+        C3RL & 65.62 & 68.36 & 25.44 & 28.06 & 43.44 & 62.19 & 45.54 & 48.00 \\
+        \rowcolor{calibrow} + CalibSFT & \textbf{66.17} & \textbf{79.70} & \textbf{15.91} & \textbf{14.35} & \textbf{44.60} & \textbf{63.03} & \textbf{23.89} & \textbf{17.38} \\
+        \bottomrule
+    \end{tabular}
+    }
+\end{table*}
