@@ -1,0 +1,34 @@
+\begin{table}[t]
+    \centering
+    \caption{Ablation of the CalibSFT supervision design on eight ID benchmarks.
+    The variants differ in the supervised responses for each segment and in
+    loss balancing.
+    CalibSFT achieves the best calibration
+    while keeping Pass@1 close to the best.}
+    \label{tab:supervision_ablation}
+    \footnotesize
+    \setlength{\tabcolsep}{3pt}
+    \resizebox{\linewidth}{!}{%
+    \begin{tabular}{lccccc rrrr}
+        \toprule
+        & \multicolumn{2}{c}{Reasoning/answer}
+        & \multicolumn{2}{c}{Confidence}
+        & Segment & \multicolumn{4}{c}{ID performance} \\
+        \cmidrule(lr){2-3} \cmidrule(lr){4-5} \cmidrule(lr){7-10}
+        Variant & Correct & Incorrect & Correct & Incorrect & balanced
+        & Pass@1 $\uparrow$ & AUROC $\uparrow$ & Brier $\downarrow$ & ECE $\downarrow$ \\
+        \midrule
+        Confidence-only & -- & -- & $\checkmark$ & $\checkmark$ & --
+        & 43.56 & 74.62 & 20.97 & 17.43 \\
+        Full-CE & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ & --
+        & 58.49 & 61.66 & 29.29 & 27.65 \\
+        Full-Balanced & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$
+        & 58.46 & 76.67 & 19.04 & 16.87 \\
+        Correct-only & $\checkmark$ & -- & $\checkmark$ & -- & $\checkmark$
+        & \textbf{59.89} & 77.58 & 18.95 & 16.98 \\
+        \rowcolor{calibrow} CalibSFT & $\checkmark$ & -- & $\checkmark$ & $\checkmark$ & $\checkmark$
+        & 58.51 & \textbf{79.93} & \textbf{17.30} & \textbf{15.95} \\
+        \bottomrule
+    \end{tabular}%
+    }
+\end{table}

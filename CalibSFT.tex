@@ -554,7 +554,7 @@ In contrast, Base and RLVR remain severely miscalibrated, indicating that answer
 However, calibration does not imply better confidence ranking: CalibSFT's OOD AUROC even declines from 65.71 to 61.20, reflecting the limited generalization of supervised training.
 Confidence-aware RL fills exactly this gap by directly optimizing discrimination, and combining it with CalibSFT yields the strongest overall performance.
 
-\input{main_results.tex}
+\input{tables/main_results.tex}
 
 
 \subsection{Calibration Analysis}
@@ -568,7 +568,7 @@ For example, DCPO's Spearman correlation rises from 0.619 to 0.976 on mathematic
 Pearson correlation also improves consistently across all baselines and splits (e.g., from 0.505 to 0.729 for RLCR on OOD).
 These results indicate that CalibSFT helps the model assign higher confidence to tasks it is more likely to answer correctly.
 
-\input{confidence_correlation.tex}
+\input{tables/confidence_correlation.tex}
 
 \begin{figure}[t]
     \centering
@@ -599,64 +599,11 @@ As a result, CalibSFT alleviates both concentration and overconfidence and lower
 For example, DCPO's dominant peak near high confidence is redistributed toward lower values while accuracy is preserved, lowering ECE from 29.05\% to 15.58\%.
 These results suggest that CalibSFT initialization not only calibrates the SFT stage but also propagates lower concentration and better calibration into the downstream RL policy.
 
-\begin{table*}[t]
-    \centering
-    \caption{AUROC ($\uparrow$) and ECE ($\downarrow$) of Qwen3-8B across confidence formats. ``Base'' denotes the model without training and ``+Ours'' the model after CalibSFT. Values are averaged over the eight ID or eight OOD datasets.}
-    \label{tab:format_calibsft}
-    \resizebox{0.95\textwidth}{!}{%
-    \begin{tabular}{lcccccccc}
-\toprule
-& \multicolumn{4}{c}{ID} & \multicolumn{4}{c}{OOD} \\
-\cmidrule(lr){2-5} \cmidrule(lr){6-9}
-& \multicolumn{2}{c}{ECE $\downarrow$} & \multicolumn{2}{c}{AUROC $\uparrow$}
-& \multicolumn{2}{c}{ECE $\downarrow$} & \multicolumn{2}{c}{AUROC $\uparrow$} \\
-\cmidrule(lr){2-3} \cmidrule(lr){4-5} \cmidrule(lr){6-7} \cmidrule(lr){8-9}
-Confidence Format & Base & +Ours & Base & +Ours & Base & +Ours & Base & +Ours \\
-\midrule
-% Rows 1--3 use the corrected mathematics grading. The linguistic row still carries the
-% pre-correction numbers, since that run lives on another machine, so it is not comparable to the
-% rows above it. Runs, all at step 160: 0830-053301 (probability, shared by rows 1--2 as the base),
-% 0909-075139 and 0906-152554 (probability, CalibSFT), 0906-151554 and 0907-040256 (digit).
-% Three transcription errors were also corrected here: the coarse-grid OOD ECE and AUROC read
-% 19.30 and 71.23 for 17.30 and 72.23, and the integer OOD AUROC read 69.36 for 66.36.
-Probability $\{0.00, 0.01, \ldots, 1.00\}$ & 14.05 & \textbf{8.59} & 81.81 & \textbf{86.32} & 32.81 & \textbf{18.20} & 68.72 & \textbf{71.31} \\
-Probability $\{0.00, 0.05, \ldots, 1.00\}$ & 14.05 & \textbf{12.13} & 81.81 & \textbf{86.05} & 32.81 & \textbf{19.30} & 68.72 & \textbf{71.23} \\
-Integer (0--9) & 14.69 & \textbf{18.66} & 79.00 & \textbf{84.14} & 26.31 & \textbf{16.70} & 67.00 & \textbf{69.36} \\
-Linguistic (low / medium / high) & 17.71 & \textbf{15.90} & 73.56 & \textbf{79.58} & 24.06 & \textbf{20.31} & 64.20 & \textbf{67.73} \\
-\bottomrule
-\end{tabular}}
-\end{table*}
+\input{tables/format_calibsft.tex}
 
 
 
-\begin{table*}[t]
-    \centering
-    \caption{AUROC ($\uparrow$) and ECE ($\downarrow$) of RLCR on Gemma4-E2B across
-    benchmarks of varying difficulty. CalibSFT noticeably improves calibration
-    across all difficulty levels.}
-    \label{tab:gemma_calibsft}
-    \resizebox{0.95\textwidth}{!}{%
-    \begin{tabular}{ccccccccc}
-        \toprule
-        & & \multicolumn{3}{c}{In-distribution} & \multicolumn{3}{c}{Out-of-distribution} & \\
-        \cmidrule(lr){3-5} \cmidrule(lr){6-8}
-        Metric & Method & Math500 & Olympiad & Minerva
-        & DROP & HotpotQA & NQOpen & Average \\
-        \midrule
-         & RLCR
-        & 7.84 & 17.69 & 30.34 & 19.92 & 26.41 & 38.25 & 23.41 \\
-        \rowcolor{calibrow} \cellcolor{white}\multirow{-2}{*}{ECE $\downarrow$} & +CalibSFT
-        & \textbf{5.34} & \textbf{7.76} & \textbf{12.74}
-        & \textbf{13.30} & \textbf{13.04} & \textbf{22.77} & \textbf{12.49} \\
-        \midrule
-         & RLCR
-        & 75.47 & 83.24 & 66.29 & 60.60 & 60.48 & 76.85 & 70.49 \\
-        \rowcolor{calibrow} \cellcolor{white}\multirow{-2}{*}{AUROC $\uparrow$} & +CalibSFT
-        & \textbf{80.34} & \textbf{87.35} & \textbf{70.75}
-        & \textbf{65.45} & \textbf{62.66} & \textbf{77.13} & \textbf{73.95} \\
-        \bottomrule
-    \end{tabular}}
-\end{table*}
+\input{tables/gemma_calibsft.tex}
 
 
 
@@ -1117,68 +1064,11 @@ Table~\ref{tab:format_prompts} lists the system prompt used for each format.
 For evaluation, an integer $d$ is mapped to $d/9$ and the labels
 \emph{low}, \emph{medium}, and \emph{high} to 0.25, 0.5, and 0.75.
 
-\begin{table}[h]
-    \centering
-    \caption{System prompts for the three confidence formats.}
-    \label{tab:format_prompts}
-    \small
-    \begin{tabularx}{\linewidth}{lX}
-        \toprule
-        Format & System prompt \\
-        \midrule
-        Probability &
-        A conversation between User and Assistant. The user asks a question, and
-        the Assistant solves it. The assistant first thinks about the reasoning
-        process in the mind and analyzes its confidence about the solution and
-        then provides the user with the final answer as well as its confidence
-        level. The confidence level indicates how certain the Assistant is about
-        its answer, expressed as a decimal between 0 and 1 with exactly two
-        decimal places, enclosed within \texttt{<confidence> </confidence>} tags.
-        The response must strictly follow this format: \texttt{<think>} reasoning
-        process here \texttt{</think> <answer>} final short answer only
-        \texttt{</answer> <confidence>} 0.xx \texttt{</confidence>}. The
-        \texttt{<answer>} tag must contain only the final answer string needed for
-        exact-match evaluation, not a full sentence, explanation, or reasoning. \\
-        \midrule
-        Integer &
-        A conversation between User and Assistant. The user asks a question, and
-        the Assistant solves it. The assistant first thinks about the reasoning
-        process in the mind and analyzes its confidence about the solution and
-        then provides the user with the final answer as well as its confidence
-        score. The confidence score indicates how certain the Assistant is about
-        its answer, expressed as a single integer from 0 to 9, enclosed within
-        \texttt{<confidence> </confidence>} tags. A score of 0 means very low
-        confidence and the answer is likely incorrect. A score of 9 means very
-        high confidence and the answer is very likely correct. The response must
-        strictly follow this format: \texttt{<think>} reasoning process here
-        \texttt{</think> <answer>} final short answer only
-        \texttt{</answer> <confidence>}X\texttt{</confidence>}, where X is one of
-        0, 1, 2, 3, 4, 5, 6, 7, 8, 9. The \texttt{<answer>} tag must contain only
-        the final answer string needed for exact-match evaluation, not a full
-        sentence, explanation, or reasoning. \\
-        \midrule
-        Linguistic &
-        A conversation between User and Assistant. The user asks a question, and
-        the Assistant solves it. The assistant first thinks about the reasoning
-        process in the mind and analyzes its confidence about the solution and
-        then provides the user with the final answer as well as its confidence
-        level. The confidence level indicates how certain the Assistant is about
-        its answer, expressed as exactly one of low, medium, or high, enclosed
-        within \texttt{<confidence> </confidence>} tags. Low means the answer is
-        likely incorrect, medium means the answer is uncertain, and high means
-        the answer is likely correct. The response must strictly follow this
-        format: \texttt{<think>} reasoning process here
-        \texttt{</think> <answer>} final short answer only
-        \texttt{</answer> <confidence>}label\texttt{</confidence>}. The
-        \texttt{<answer>} tag must contain only the final answer string needed for
-        exact-match evaluation, not a full sentence, explanation, or reasoning. \\
-        \bottomrule
-    \end{tabularx}
-\end{table}
+\input{tables/format_prompts.tex}
 
 \section{Detailed Experimental Results}
 
-\input{per_dataset_results.tex}
+\input{tables/per_dataset_results.tex}
 
 
 \subsection{Per-Dataset Main Results}
@@ -1285,7 +1175,7 @@ metric whose ranges overlap, $65.33$--$66.27$ for RLCR against
 $65.90$--$67.20$ with CalibSFT, consistent with CalibSFT improving calibration
 without trading away accuracy.
 
-\input{seed_stability}
+\input{tables/seed_stability.tex}
 
 \subsection{Ablation Studies}
 \label{sec:ablation_studies}
@@ -1293,26 +1183,7 @@ without trading away accuracy.
 \paragraph{Confidence target construction.}
 \label{sec:target_construction_setup}
 
-\begin{table}[t]
-    \centering
-    \caption{Training-target distribution (\%) over ten equal-width bins in the confidence target ablation.}
-    \label{tab:training_target_distribution}
-    \footnotesize
-    \setlength{\tabcolsep}{3pt}
-    \resizebox{\linewidth}{!}{%
-    \begin{tabular}{lrrrrrrrrrr}
-        \toprule
-        Target & $[0.0, 0.1]$ & $(0.1, 0.2]$ & $(0.2, 0.3]$ & $(0.3, 0.4]$ & $(0.4, 0.5]$
-        & $(0.5, 0.6]$ & $(0.6, 0.7]$ & $(0.7, 0.8]$ & $(0.8, 0.9]$ & $(0.9, 1.0]$ \\
-        \midrule
-        CSFT & 11.11 & 11.11 & 11.11 & 11.11 & 11.11 & 11.11 & 11.11 & 11.11 & 11.11 & 0.00 \\
-        UaIT & 0.00 & 0.00 & 0.00 & 0.00 & 0.00 & 0.00 & 6.48 & 56.06 & 35.15 & 2.31 \\
-        SaySelf & 22.07 & 14.41 & 11.93 & 10.22 & 9.04 & 8.26 & 8.89 & 6.63 & 5.56 & 3.00 \\
-        LoVeC & 27.33 & 3.78 & 8.17 & 0.20 & 1.37 & 0.63 & 0.22 & 1.54 & 15.80 & 40.96 \\
-        \rowcolor{calibrow} CalibSFT & 11.11 & 11.11 & 11.11 & 11.11 & 5.56 & 11.11 & 11.11 & 11.11 & 11.11 & 5.56 \\
-        \bottomrule
-    \end{tabular}}
-\end{table}
+\input{tables/training_target_distribution.tex}
 
 The construction of confidence targets in CalibSFT is inspired by proper scoring rules, which serve as a foundation for calibration.
 To verify the effectiveness of this target design, we compare CalibSFT
@@ -1356,58 +1227,7 @@ proportion of training targets in each of ten equal-width confidence
 intervals across the five methods.
 
 
-\begin{table*}[t]
-    \centering
-    \begin{minipage}[t]{0.49\textwidth}
-        \vspace{0pt}
-        \centering
-        \caption{AUROC and Brier score on five confidence target construction methods on ID mathematical benchmarks. CalibSFT achieves the better AUROC and Brier score in both phases.}
-        \label{tab:target_construction}
-        \footnotesize
-        \setlength{\tabcolsep}{3pt}
-        \resizebox{\linewidth}{!}{%
-        \begin{tabular}{lcccc}
-        \toprule
-        & \multicolumn{2}{c}{Pre-SFT targets} & \multicolumn{2}{c}{Post-SFT predictions} \\
-        \cmidrule(lr){2-3} \cmidrule(lr){4-5}
-        Target & AUROC $\uparrow$ & Brier $\downarrow$
-        & AUROC $\uparrow$ & Brier $\downarrow$ \\
-        \midrule
-        CSFT & 50.00 & 31.67 & 73.46 & 19.15 \\
-        UaIT & 52.05 & 33.17 & 74.72 & 24.24 \\
-        SaySelf & -- & 41.33 & 57.69 & 39.38 \\
-        LoVeC & 75.40 & 24.71 & 71.11 & 32.32 \\
-        \rowcolor{calibrow} CalibSFT & \textbf{100.00} & \textbf{7.92}
-        & \textbf{79.93} & \textbf{17.30} \\
-        \bottomrule
-    \end{tabular}}
-    \end{minipage}\hfill
-    \begin{minipage}[t]{0.45\textwidth}
-        \vspace{0pt}
-        \centering
-        \caption{Average calibration performance on eight ID and eight OOD
-    benchmarks across mixing weights. Equal weighting ($\lambda=0.5$) gives the
-    strongest ID performance.}
-        \label{tab:lambda_ablation}
-        \footnotesize
-        \setlength{\tabcolsep}{4pt}
-        \resizebox{\linewidth}{!}{%
-        \begin{tabular}{crrrrr}
-        \toprule
-        & \multicolumn{2}{c}{ID} & \multicolumn{2}{c}{OOD} \\
-        \cmidrule(lr){2-3} \cmidrule(lr){4-5}
-        $\lambda$ & AUROC $\uparrow$ & Brier $\downarrow$
-        & AUROC $\uparrow$ & Brier $\downarrow$ \\
-        \midrule
-        0 & 68.10 & 32.49 & 59.20 & 38.92 \\
-        0.25 & 78.02 & 18.83 & 66.88 & 29.94 \\
-        \rowcolor{calibrow} 0.5 & \textbf{79.93} & \textbf{17.30} & \textbf{67.81} & 30.82 \\
-        0.75 & 75.93 & 20.00 & 65.82 & \textbf{28.37} \\
-        1 & 73.29 & 19.90 & 57.22 & 35.72 \\
-        \bottomrule
-    \end{tabular}}
-    \end{minipage}
-\end{table*}
+\input{tables/target_construction_lambda.tex}
 
 Table~\ref{tab:target_construction} reports the AUROC and Brier score of the constructed targets before SFT, together with the resulting models' average performance on in-distribution mathematical benchmarks after SFT. CalibSFT outperforms all four alternatives on both fronts---achieving a lower Brier score and higher AUROC at construction, which transfers to better downstream performance. These results confirm that grounding target construction in proper scoring rules jointly improves calibration and discrimination.
 
@@ -1427,40 +1247,7 @@ Equal weighting achieves the highest AUROC and lowest Brier score on ID
 benchmarks among the tested settings, so we use $\lambda=0.5$ as the default.
 
 
-\begin{table}[t]
-    \centering
-    \caption{Ablation of the CalibSFT supervision design on eight ID benchmarks.
-    The variants differ in the supervised responses for each segment and in
-    loss balancing.
-    CalibSFT achieves the best calibration
-    while keeping Pass@1 close to the best.}
-    \label{tab:supervision_ablation}
-    \footnotesize
-    \setlength{\tabcolsep}{3pt}
-    \resizebox{\linewidth}{!}{%
-    \begin{tabular}{lccccc rrrr}
-        \toprule
-        & \multicolumn{2}{c}{Reasoning/answer}
-        & \multicolumn{2}{c}{Confidence}
-        & Segment & \multicolumn{4}{c}{ID performance} \\
-        \cmidrule(lr){2-3} \cmidrule(lr){4-5} \cmidrule(lr){7-10}
-        Variant & Correct & Incorrect & Correct & Incorrect & balanced
-        & Pass@1 $\uparrow$ & AUROC $\uparrow$ & Brier $\downarrow$ & ECE $\downarrow$ \\
-        \midrule
-        Confidence-only & -- & -- & $\checkmark$ & $\checkmark$ & --
-        & 43.56 & 74.62 & 20.97 & 17.43 \\
-        Full-CE & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ & --
-        & 58.49 & 61.66 & 29.29 & 27.65 \\
-        Full-Balanced & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$
-        & 58.46 & 76.67 & 19.04 & 16.87 \\
-        Correct-only & $\checkmark$ & -- & $\checkmark$ & -- & $\checkmark$
-        & \textbf{59.89} & 77.58 & 18.95 & 16.98 \\
-        \rowcolor{calibrow} CalibSFT & $\checkmark$ & -- & $\checkmark$ & $\checkmark$ & $\checkmark$
-        & 58.51 & \textbf{79.93} & \textbf{17.30} & \textbf{15.95} \\
-        \bottomrule
-    \end{tabular}%
-    }
-\end{table}
+\input{tables/supervision_ablation.tex}
 
 \paragraph{Correctness-conditional supervision.}
 To verify the effectiveness of CalibSFT design, we ablate three choices in
@@ -1528,7 +1315,7 @@ success rate; the two are computed on disjoint questions, but the metric is by
 construction aligned with what CalibSFT supervises, so we read it alongside the
 other three rather than on its own.
 
-\input{additional_metrics}
+\input{tables/additional_metrics.tex}
 
 Table~\ref{tab:additional_metrics} shows the same pattern as the main results.
 Across the five RL objectives, the two splits, and the four metrics, CalibSFT
@@ -1567,7 +1354,7 @@ priors of Figure~\ref{fig:initial_confidence_prior} sit below the ceiling rather
 than at it, and the latter reduces to Distinct once the bins are fine enough to
 separate values on the two-decimal grid the models emit.
 
-\input{diversity_metrics}
+\input{tables/diversity_metrics.tex}
 
 Table~\ref{tab:diversity_metrics} shows that CalibSFT broadens confidence
 support for every objective and on both splits, with no exceptions among the 40
@@ -1624,7 +1411,7 @@ and lowers Brier score, but its ECE stays above the verbalized value
 in-distribution, 17.62 against 14.46 without CalibSFT and 9.67 against 8.59
 with it.
 
-\input{confidence_estimators.tex}
+\input{tables/confidence_estimators.tex}
 
 \subsection{Confidence Visualization}
 \label{sec:confidence_visualization}
@@ -1683,24 +1470,7 @@ RLCR, which samples new responses before every update, so the supervised stage
 costs $6.9\%$ of the GPU-hours the RL stage does. Wall-clock time includes model
 loading, periodic validation, and checkpoint writing.
 
-\begin{table}[t]
-    \centering
-    \caption{Training cost of the CalibSFT stage and of confidence-aware RL on
-    one node with eight NVIDIA B20Z GPUs. Runs of 180 (CalibSFT) and 160 (RL)
-    optimization steps are scaled linearly to a common budget of 200 steps.}
-    \label{tab:training_cost}
-    \footnotesize
-    \begin{tabular}{lccc}
-        \toprule
-        Stage & Minutes per step & Wall-clock (h) & GPU-hours \\
-        \midrule
-        CalibSFT & 0.33 & 1.1 & 8.8 \\
-        \midrule
-        RLCR & 4.77 & 15.9 & 127.3 \\
-        RLCR + CalibSFT & 4.58 & 15.3 & 122.2 \\
-        \bottomrule
-    \end{tabular}
-\end{table}
+\input{tables/training_cost.tex}
 
 \section{Downstream Applications}
 
@@ -1756,7 +1526,7 @@ for C3RL and 12.3 for ReDoubt against 0.5 and 1.2 with CalibSFT. With CalibSFT
 the curve rises smoothly, so a threshold
 exists for any budget a deployment may ask for.
 
-\input{risk_control.tex}
+\input{tables/risk_control.tex}
 
 \begin{figure}[t]
     \centering
@@ -1813,6 +1583,6 @@ take the longest to answer: RLCR defers $45.9\%$ of the questions at the $2\%$
 tolerance yet avoids only $23.3\%$ of the Qwen3.7-Flash tokens, and with CalibSFT
 initialization it defers $39.2\%$ and avoids $36.1\%$.
 
-\input{cascade.tex}
+\input{tables/cascade.tex}
 
 \end{document}

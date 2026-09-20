@@ -1,0 +1,52 @@
+\begin{table*}[t]
+    \centering
+    \begin{minipage}[t]{0.49\textwidth}
+        \vspace{0pt}
+        \centering
+        \caption{AUROC and Brier score on five confidence target construction methods on ID mathematical benchmarks. CalibSFT achieves the better AUROC and Brier score in both phases.}
+        \label{tab:target_construction}
+        \footnotesize
+        \setlength{\tabcolsep}{3pt}
+        \resizebox{\linewidth}{!}{%
+        \begin{tabular}{lcccc}
+        \toprule
+        & \multicolumn{2}{c}{Pre-SFT targets} & \multicolumn{2}{c}{Post-SFT predictions} \\
+        \cmidrule(lr){2-3} \cmidrule(lr){4-5}
+        Target & AUROC $\uparrow$ & Brier $\downarrow$
+        & AUROC $\uparrow$ & Brier $\downarrow$ \\
+        \midrule
+        CSFT & 50.00 & 31.67 & 73.46 & 19.15 \\
+        UaIT & 52.05 & 33.17 & 74.72 & 24.24 \\
+        SaySelf & -- & 41.33 & 57.69 & 39.38 \\
+        LoVeC & 75.40 & 24.71 & 71.11 & 32.32 \\
+        \rowcolor{calibrow} CalibSFT & \textbf{100.00} & \textbf{7.92}
+        & \textbf{79.93} & \textbf{17.30} \\
+        \bottomrule
+    \end{tabular}}
+    \end{minipage}\hfill
+    \begin{minipage}[t]{0.45\textwidth}
+        \vspace{0pt}
+        \centering
+        \caption{Average calibration performance on eight ID and eight OOD
+    benchmarks across mixing weights. Equal weighting ($\lambda=0.5$) gives the
+    strongest ID performance.}
+        \label{tab:lambda_ablation}
+        \footnotesize
+        \setlength{\tabcolsep}{4pt}
+        \resizebox{\linewidth}{!}{%
+        \begin{tabular}{crrrrr}
+        \toprule
+        & \multicolumn{2}{c}{ID} & \multicolumn{2}{c}{OOD} \\
+        \cmidrule(lr){2-3} \cmidrule(lr){4-5}
+        $\lambda$ & AUROC $\uparrow$ & Brier $\downarrow$
+        & AUROC $\uparrow$ & Brier $\downarrow$ \\
+        \midrule
+        0 & 68.10 & 32.49 & 59.20 & 38.92 \\
+        0.25 & 78.02 & 18.83 & 66.88 & 29.94 \\
+        \rowcolor{calibrow} 0.5 & \textbf{79.93} & \textbf{17.30} & \textbf{67.81} & 30.82 \\
+        0.75 & 75.93 & 20.00 & 65.82 & \textbf{28.37} \\
+        1 & 73.29 & 19.90 & 57.22 & 35.72 \\
+        \bottomrule
+    \end{tabular}}
+    \end{minipage}
+\end{table*}

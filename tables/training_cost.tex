@@ -1,0 +1,18 @@
+\begin{table}[t]
+    \centering
+    \caption{Training cost of the CalibSFT stage and of confidence-aware RL on
+    one node with eight NVIDIA B20Z GPUs. Runs of 180 (CalibSFT) and 160 (RL)
+    optimization steps are scaled linearly to a common budget of 200 steps.}
+    \label{tab:training_cost}
+    \footnotesize
+    \begin{tabular}{lccc}
+        \toprule
+        Stage & Minutes per step & Wall-clock (h) & GPU-hours \\
+        \midrule
+        CalibSFT & 0.33 & 1.1 & 8.8 \\
+        \midrule
+        RLCR & 4.77 & 15.9 & 127.3 \\
+        RLCR + CalibSFT & 4.58 & 15.3 & 122.2 \\
+        \bottomrule
+    \end{tabular}
+\end{table}

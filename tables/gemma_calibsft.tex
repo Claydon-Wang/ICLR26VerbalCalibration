@@ -1,0 +1,28 @@
+\begin{table*}[t]
+    \centering
+    \caption{AUROC ($\uparrow$) and ECE ($\downarrow$) of RLCR on Gemma4-E2B across
+    benchmarks of varying difficulty. CalibSFT noticeably improves calibration
+    across all difficulty levels.}
+    \label{tab:gemma_calibsft}
+    \resizebox{0.95\textwidth}{!}{%
+    \begin{tabular}{ccccccccc}
+        \toprule
+        & & \multicolumn{3}{c}{In-distribution} & \multicolumn{3}{c}{Out-of-distribution} & \\
+        \cmidrule(lr){3-5} \cmidrule(lr){6-8}
+        Metric & Method & Math500 & Olympiad & Minerva
+        & DROP & HotpotQA & NQOpen & Average \\
+        \midrule
+         & RLCR
+        & 7.84 & 17.69 & 30.34 & 19.92 & 26.41 & 38.25 & 23.41 \\
+        \rowcolor{calibrow} \cellcolor{white}\multirow{-2}{*}{ECE $\downarrow$} & +CalibSFT
+        & \textbf{5.34} & \textbf{7.76} & \textbf{12.74}
+        & \textbf{13.30} & \textbf{13.04} & \textbf{22.77} & \textbf{12.49} \\
+        \midrule
+         & RLCR
+        & 75.47 & 83.24 & 66.29 & 60.60 & 60.48 & 76.85 & 70.49 \\
+        \rowcolor{calibrow} \cellcolor{white}\multirow{-2}{*}{AUROC $\uparrow$} & +CalibSFT
+        & \textbf{80.34} & \textbf{87.35} & \textbf{70.75}
+        & \textbf{65.45} & \textbf{62.66} & \textbf{77.13} & \textbf{73.95} \\
+        \bottomrule
+    \end{tabular}}
+\end{table*}

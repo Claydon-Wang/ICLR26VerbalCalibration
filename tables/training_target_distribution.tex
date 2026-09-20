@@ -1,0 +1,20 @@
+\begin{table}[t]
+    \centering
+    \caption{Training-target distribution (\%) over ten equal-width bins in the confidence target ablation.}
+    \label{tab:training_target_distribution}
+    \footnotesize
+    \setlength{\tabcolsep}{3pt}
+    \resizebox{\linewidth}{!}{%
+    \begin{tabular}{lrrrrrrrrrr}
+        \toprule
+        Target & $[0.0, 0.1]$ & $(0.1, 0.2]$ & $(0.2, 0.3]$ & $(0.3, 0.4]$ & $(0.4, 0.5]$
+        & $(0.5, 0.6]$ & $(0.6, 0.7]$ & $(0.7, 0.8]$ & $(0.8, 0.9]$ & $(0.9, 1.0]$ \\
+        \midrule
+        CSFT & 11.11 & 11.11 & 11.11 & 11.11 & 11.11 & 11.11 & 11.11 & 11.11 & 11.11 & 0.00 \\
+        UaIT & 0.00 & 0.00 & 0.00 & 0.00 & 0.00 & 0.00 & 6.48 & 56.06 & 35.15 & 2.31 \\
+        SaySelf & 22.07 & 14.41 & 11.93 & 10.22 & 9.04 & 8.26 & 8.89 & 6.63 & 5.56 & 3.00 \\
+        LoVeC & 27.33 & 3.78 & 8.17 & 0.20 & 1.37 & 0.63 & 0.22 & 1.54 & 15.80 & 40.96 \\
+        \rowcolor{calibrow} CalibSFT & 11.11 & 11.11 & 11.11 & 11.11 & 5.56 & 11.11 & 11.11 & 11.11 & 11.11 & 5.56 \\
+        \bottomrule
+    \end{tabular}}
+\end{table}

@@ -1,0 +1,20 @@
+% Placeholder Introduction text removed from CalibSFT.tex on 2026-09-12.
+% Kept for reference only; this file is NOT \input by the paper.
+% The user wrote the first two paragraphs of the Introduction (kept in place);
+% everything below was draft/placeholder text removed to avoid interference
+% while the Introduction is rewritten.
+%
+% Note: terminology here is stale relative to the current Method section
+% ("rollouts" -> "responses", "selective segment loss" ->
+% "correctness-conditional supervision").
+
+We identify one primary failure and one recipe-dependent optimization effect. Under a fixed prompt, format, and decoding protocol, the base model's sampled confidence is concentrated on a small set of values and only moderately stratifies correct and incorrect rollouts. The resulting confidence prior provides limited support for learning a graded correctness estimate. In filtering ablations, completed no-filtering DCPO and RLCR runs further concentrate confidence on a few values and endpoints, whereas the corresponding DAPO-filtered runs retain broader support. We therefore treat confidence concentration as a property of the sampling recipe, rather than as an inevitable consequence of GRPO.
+
+We address the initialization problem with CalibSFT. CalibSFT constructs a target for each rollout by combining the success rate of its prompt group with the rollout's verified correctness. Its selective segment loss retains confidence supervision on incorrect rollouts while restricting reasoning/answer supervision to correct rollouts, and target-balanced sampling exposes the model to a broader range of confidence values. In the subsequent RL stage, all compared methods use the same DAPO-style mixed-outcome filtering~\citep{yu2025dapo} as a fixed sampling recipe, allowing us to compare Base and CalibSFT initialization under controlled downstream optimization.
+
+We make three contributions:
+\begin{itemize}[leftmargin=*]
+    \item We characterize a concentrated base-model confidence prior and document how confidence concentration depends on the RL sampling recipe.
+    \item We introduce CalibSFT, which combines rollout-derived targets, target-balanced sampling, and correctness-aware segment supervision for confidence initialization.
+    \item We evaluate whether the CalibSFT initialization improves accuracy, calibration, and confidence diversity after downstream RL across multiple confidence-aware objectives.
+\end{itemize}

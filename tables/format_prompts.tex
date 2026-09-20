@@ -1,0 +1,58 @@
+\begin{table}[h]
+    \centering
+    \caption{System prompts for the three confidence formats.}
+    \label{tab:format_prompts}
+    \small
+    \begin{tabularx}{\linewidth}{lX}
+        \toprule
+        Format & System prompt \\
+        \midrule
+        Probability &
+        A conversation between User and Assistant. The user asks a question, and
+        the Assistant solves it. The assistant first thinks about the reasoning
+        process in the mind and analyzes its confidence about the solution and
+        then provides the user with the final answer as well as its confidence
+        level. The confidence level indicates how certain the Assistant is about
+        its answer, expressed as a decimal between 0 and 1 with exactly two
+        decimal places, enclosed within \texttt{<confidence> </confidence>} tags.
+        The response must strictly follow this format: \texttt{<think>} reasoning
+        process here \texttt{</think> <answer>} final short answer only
+        \texttt{</answer> <confidence>} 0.xx \texttt{</confidence>}. The
+        \texttt{<answer>} tag must contain only the final answer string needed for
+        exact-match evaluation, not a full sentence, explanation, or reasoning. \\
+        \midrule
+        Integer &
+        A conversation between User and Assistant. The user asks a question, and
+        the Assistant solves it. The assistant first thinks about the reasoning
+        process in the mind and analyzes its confidence about the solution and
+        then provides the user with the final answer as well as its confidence
+        score. The confidence score indicates how certain the Assistant is about
+        its answer, expressed as a single integer from 0 to 9, enclosed within
+        \texttt{<confidence> </confidence>} tags. A score of 0 means very low
+        confidence and the answer is likely incorrect. A score of 9 means very
+        high confidence and the answer is very likely correct. The response must
+        strictly follow this format: \texttt{<think>} reasoning process here
+        \texttt{</think> <answer>} final short answer only
+        \texttt{</answer> <confidence>}X\texttt{</confidence>}, where X is one of
+        0, 1, 2, 3, 4, 5, 6, 7, 8, 9. The \texttt{<answer>} tag must contain only
+        the final answer string needed for exact-match evaluation, not a full
+        sentence, explanation, or reasoning. \\
+        \midrule
+        Linguistic &
+        A conversation between User and Assistant. The user asks a question, and
+        the Assistant solves it. The assistant first thinks about the reasoning
+        process in the mind and analyzes its confidence about the solution and
+        then provides the user with the final answer as well as its confidence
+        level. The confidence level indicates how certain the Assistant is about
+        its answer, expressed as exactly one of low, medium, or high, enclosed
+        within \texttt{<confidence> </confidence>} tags. Low means the answer is
+        likely incorrect, medium means the answer is uncertain, and high means
+        the answer is likely correct. The response must strictly follow this
+        format: \texttt{<think>} reasoning process here
+        \texttt{</think> <answer>} final short answer only
+        \texttt{</answer> <confidence>}label\texttt{</confidence>}. The
+        \texttt{<answer>} tag must contain only the final answer string needed for
+        exact-match evaluation, not a full sentence, explanation, or reasoning. \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
