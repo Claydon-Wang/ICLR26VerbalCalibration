@@ -1,11 +1,11 @@
 \begin{table*}[t]
     \centering
     \caption{Confidence diversity on the in-distribution and out-of-distribution splits, under the
-    protocol of Table~\ref{tab:main_results}. Distinct counts the confidence values a model
+    protocol of Table~\ref{tab:main_results}. Support counts the unique confidence values a model
     produces, Top-1 and Top-3 are the share of responses taking its most frequent one and three
-    values, and Effective is the exponential of the entropy of the value distribution, that is, the
-    number of values that would carry the same mass if used uniformly. Distinct and Effective are
-    counts; Top-1 and Top-3 are percentages.}
+    values, and Effective is the exponential of the entropy of the value distribution. Baseline RL methods collapse into narrow confidence supports with heavy concentration on top values,
+     whereas CalibSFT substantially broadens both support size and effective support across all objectives.}
+
     \label{tab:diversity_metrics}
     \resizebox{0.98\textwidth}{!}{%
     \renewcommand\arraystretch{1.0}
@@ -13,7 +13,7 @@
         \toprule
         & \multicolumn{4}{c}{In-distribution} & \multicolumn{4}{c}{Out-of-distribution} \\
         \cmidrule(lr){2-5} \cmidrule(lr){6-9}
-        Method & Distinct $\uparrow$ & Top-1 $\downarrow$ & Top-3 $\downarrow$ & Effective $\uparrow$ & Distinct $\uparrow$ & Top-1 $\downarrow$ & Top-3 $\downarrow$ & Effective $\uparrow$ \\
+        Method & Support $\uparrow$ & Top-1 $\downarrow$ & Top-3 $\downarrow$ & Effective Support $\uparrow$ & Support $\uparrow$ & Top-1 $\downarrow$ & Top-3 $\downarrow$ & Effective Support $\uparrow$ \\
         \midrule
         RLCR & 15.75 & 33.30 & 67.74 & 6.90 & 18.62 & 33.18 & 66.22 & 7.03 \\
         \rowcolor{calibrow} + CalibSFT & \textbf{86.88} & \textbf{12.59} & \textbf{20.57} & \textbf{49.42} & \textbf{94.50} & \textbf{3.73} & \textbf{9.90} & \textbf{72.83} \\

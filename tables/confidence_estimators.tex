@@ -1,6 +1,9 @@
 \begin{table}[t]
     \centering
-    \caption{Confidence estimators for RLCR with and without CalibSFT initialization, averaged over the eight in-distribution and eight out-of-distribution benchmarks. CalibSFT initialization improves calibration and discrimination under all three estimators. Verbalized and token-probability confidence score the same responses and therefore share Pass@1, while self-consistency aggregates those samples by majority vote, so its accuracy column reports majority-vote accuracy.}
+    \caption{Confidence estimators for RLCR with and without CalibSFT initialization, 
+    averaged over the 8 in-distribution and 8 out-of-distribution benchmarks. 
+    self-consistency aggregates those samples by majority vote, so its pass@1 column reports majority-vote accuracy.
+    CalibSFT initialization improves calibration and discrimination under all three estimators.}
     \label{tab:confidence_estimators}
     \resizebox{\linewidth}{!}{%
     \begin{tabular}{llcccccccc}

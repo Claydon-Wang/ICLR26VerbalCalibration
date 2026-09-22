@@ -1,6 +1,6 @@
 \begin{table*}[t]
     \centering
-    \caption{Certified deferral to a stronger model for confidence-aware RL with and without CalibSFT initialization. The local model answers a question when its confidence reaches a threshold and defers it to the hosted model otherwise. The threshold is selected on half of the questions so that the accuracy lost against deferring every question stays below the tolerance with probability $0.95$, and what it reaches on the held-out questions is averaged over ten splits. The certificate constrains accuracy, so the accuracy column records that the guarantee was met rather than a quantity being compared; what the threshold trades is cost, reported as the share of questions deferred and the share of the hosted model's tokens it avoids against deferring every question. Deferring every question answers 82.58\% correctly and deferring none answers between 76.3\% and 78.0\% correctly.}
+    \caption{Confidence-guided model routing to Qwen3.7-Flash across two accuracy-loss tolerances $\varepsilon$, where local policies are trained on Qwen3-8B. Values are averaged over ten random splits. CalibSFT initialization substantially reduces deferral rates and increases token savings while maintaining task accuracy close to the full-deferral baseline ($82.58\%$).}
     \label{tab:cascade}
     \footnotesize
     \setlength{\tabcolsep}{5pt}

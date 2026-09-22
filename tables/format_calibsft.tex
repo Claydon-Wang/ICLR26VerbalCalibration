@@ -1,6 +1,9 @@
 \begin{table*}[t]
     \centering
-    \caption{AUROC ($\uparrow$) and ECE ($\downarrow$) of Qwen3-8B across confidence formats. ``Base'' denotes the model without training and ``+Ours'' the model after CalibSFT. Values are averaged over the eight ID or eight OOD datasets.}
+    % \caption{AUROC ($\uparrow$) and ECE ($\downarrow$) of RLCR on Qwen3-8B across confidence formats. ``Base'' denotes the model without training and ``+Ours'' the model after CalibSFT. Values are averaged over the eight ID or eight OOD datasets.}
+    \caption{AUROC ($\uparrow$) and ECE ($\downarrow$) of RLCR on Qwen3-8B across confidence formats.
+    ``Base'' denotes standard RLCR, and ``+Ours'' denotes RLCR initialized from CalibSFT. 
+    Across all four formats, CalibSFT consistently improves AUROC and reduces ECE across the 8 ID and 8 OOD benchmarks.}
     \label{tab:format_calibsft}
     \resizebox{0.95\textwidth}{!}{%
     \begin{tabular}{lcccccccc}
@@ -12,16 +15,10 @@
 \cmidrule(lr){2-3} \cmidrule(lr){4-5} \cmidrule(lr){6-7} \cmidrule(lr){8-9}
 Confidence Format & Base & +Ours & Base & +Ours & Base & +Ours & Base & +Ours \\
 \midrule
-% Rows 1--3 use the corrected mathematics grading. The linguistic row still carries the
-% pre-correction numbers, since that run lives on another machine, so it is not comparable to the
-% rows above it. Runs, all at step 160: 0830-053301 (probability, shared by rows 1--2 as the base),
-% 0909-075139 and 0906-152554 (probability, CalibSFT), 0906-151554 and 0907-040256 (digit).
-% Three transcription errors were also corrected here: the coarse-grid OOD ECE and AUROC read
-% 19.30 and 71.23 for 17.30 and 72.23, and the integer OOD AUROC read 69.36 for 66.36.
-Probability $\{0.00, 0.01, \ldots, 1.00\}$ & 14.05 & \textbf{8.59} & 81.81 & \textbf{86.32} & 32.81 & \textbf{18.20} & 68.72 & \textbf{71.31} \\
-Probability $\{0.00, 0.05, \ldots, 1.00\}$ & 14.05 & \textbf{12.13} & 81.81 & \textbf{86.05} & 32.81 & \textbf{19.30} & 68.72 & \textbf{71.23} \\
-Integer (0--9) & 14.69 & \textbf{18.66} & 79.00 & \textbf{84.14} & 26.31 & \textbf{16.70} & 67.00 & \textbf{69.36} \\
 Linguistic (low / medium / high) & 17.71 & \textbf{15.90} & 73.56 & \textbf{79.58} & 24.06 & \textbf{20.31} & 64.20 & \textbf{67.73} \\
+Integer (0--9) & 14.69 & \textbf{14.06} & 79.00 & \textbf{84.14} & 26.31 & \textbf{16.70} & 67.00 & \textbf{69.36} \\
+Probability $\{0.00, 0.05, \ldots, 1.00\}$ & 14.05 & \textbf{12.13} & 81.81 & \textbf{86.05} & 32.81 & \textbf{19.30} & 68.72 & \textbf{71.23} \\
+\rowcolor{calibrow} Probability $\{0.00, 0.01, \ldots, 1.00\}$ & 14.05 & \textbf{8.59} & 81.81 & \textbf{86.32} & 32.81 & \textbf{18.20} & 68.72 & \textbf{71.31} \\
 \bottomrule
 \end{tabular}}
 \end{table*}

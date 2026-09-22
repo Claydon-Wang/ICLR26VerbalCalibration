@@ -1,11 +1,13 @@
 \begin{table*}[t]
     \centering
-    \caption{Calibration and failure prediction under additional metrics, on the in-distribution
+    \caption{Calibration performance on additional metrics, on the in-distribution
     and out-of-distribution splits and under the protocol of Table~\ref{tab:main_results}. PCE is
     the part of ECE contributed by the overconfident bins, Cap.\ Brier scores each question's mean
     confidence against its rollout success rate, E-AURC is the excess of the risk--coverage area
     over a perfect ranking, and RCE measures the deviation from a monotone correspondence between
-    confidence and expected correctness. All values are percentages.}
+    confidence and expected correctness. 
+ Across all baseline RL methods, incorporating CalibSFT consistently reduces overconfidence and misranking errors (lower PCE, E-AURC, and RCE) while improving question-level confidence alignment (lower Cap.~Brier).}
+
     \label{tab:additional_metrics}
     \resizebox{0.98\textwidth}{!}{%
     \renewcommand\arraystretch{1.0}

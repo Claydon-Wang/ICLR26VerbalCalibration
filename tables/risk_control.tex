@@ -1,6 +1,11 @@
+
+
 \begin{table}[t]
     \centering
-    \caption{Certified coverage (\%) of confidence-aware RL with and without CalibSFT initialization. A threshold is selected on half of the questions so that the error rate among answered responses stays below the risk budget with probability $0.95$, and the coverage it reaches on the held-out questions is averaged over ten splits. The last row is the coverage a perfect ranking of the same responses would certify, averaged over the ten models; it varies by at most 2.9 points between them.}
+    \caption{Certified coverage (\%) at fixed risk budgets for confidence-aware RL with and without CalibSFT initialization. 
+    Values report the mean and standard deviation on held-out questions over ten random splits ($\delta=0.05$). 
+    Perfect ranking serves as an oracle reference that ranks all correct responses above incorrect ones. 
+    CalibSFT initialization consistently increases certified coverage across all methods and risk budgets.}
     \label{tab:risk_control}
     \footnotesize
     \setlength{\tabcolsep}{5pt}
