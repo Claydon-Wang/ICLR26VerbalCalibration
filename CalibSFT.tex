@@ -472,17 +472,25 @@ Finally, Appendix~\ref{sec:ablation_studies} ablates the target construction, mi
 
 \subsection{Experimental Setup}
 
-\paragraph{Baselines.} 
+% We compare methods spanning answer-only and confidence-aware training. \textbf{Base}
+% denotes the checkpoint without task-specific training, while \textbf{RLVR} optimizes only
+% answer correctness. We use confidence-aware RL baselines including
+% \textbf{RLCR}~\citep{damani2026beyond}, \textbf{ReDoubt}~\citep{bani2026rewarding},
+% \textbf{CoCA}~\citep{li2026confidence}, \textbf{DCPO}~\citep{ma2026decoupling}, and
+% \textbf{C3RL}~\citep{yang2026scaling}. To measure the effect of \textbf{CalibSFT}, we
+% evaluate each confidence-aware RL method from both the Base and CalibSFT
+% checkpoints. All methods use Qwen3-8B~\citep{yang2025qwen3} as the
+% default model and RL follows the \textbf{DAPO} training recipe~\citep{yu2025dapo}.
 
+\paragraph{Baselines.}
 We compare methods spanning answer-only and confidence-aware training. \textbf{Base}
-denotes the checkpoint without task-specific training, while \textbf{RLVR} optimizes only
-answer correctness. We use confidence-aware RL baselines including
-\textbf{RLCR}~\citep{damani2026beyond}, \textbf{ReDoubt}~\citep{bani2026rewarding},
-\textbf{CoCA}~\citep{li2026confidence}, \textbf{DCPO}~\citep{ma2026decoupling}, and
-\textbf{C3RL}~\citep{yang2026scaling}. To measure the effect of \textbf{CalibSFT}, we
-evaluate each confidence-aware RL method from both the Base and CalibSFT
-checkpoints. All methods use Qwen3-8B~\citep{yang2025qwen3} as the
-default model and RL follows the \textbf{DAPO} training recipe~\citep{yu2025dapo}.
+is the off-the-shelf checkpoint, while \textbf{RLVR} optimizes only answer correctness.
+We evaluate five representative confidence-aware RL baselines covering two training paradigms:
+(1)~\textbf{joint training}, which simultaneously optimizes correctness and confidence, including \textbf{RLCR}~\citep{damani2026beyond}, \textbf{CoCA}~\citep{li2026confidence}, \textbf{DCPO}~\citep{ma2026decoupling}, and \textbf{C3RL}~\citep{yang2026scaling}.
+(2)~\textbf{two-stage training}, \textbf{ReDoubt}~\citep{bani2026rewarding} freezes reasoning optimization and tunes confidence upon a trained RLVR model.
+We evaluate each confidence-aware RL method initialized from the corresponding CalibSFT checkpoint.
+All methods use Qwen3-8B~\citep{yang2025qwen3} as the default backbone within the \textbf{DAPO} training framework~\citep{yu2025dapo}.
+
 
 \paragraph{Datasets.}
 We use \textbf{DeepScaleR-Preview}~\citep{deepscaler2025} as the mathematical training dataset.
@@ -496,7 +504,7 @@ For general reasoning, we use \textbf{HotpotQA}~\citep{yang2018hotpotqa},
 \textbf{MuSiQue}~\citep{trivedi2022musique}, \textbf{TriviaQA}~\citep{joshi2017triviaqa},
 \textbf{NQOpen}~\citep{lee2019latent}, \textbf{PopQA}~\citep{mallen2023trust},
 \textbf{WebQuestions}~\citep{berant2013semantic}, \textbf{DROP}~\citep{dua2019drop}, and
-\textbf{LiveBenchReasoning}~\citep{white2024livebench}.
+\textbf{LiveBenchReasoning}~\citep{white2025livebench}.
 
 \paragraph{Evaluation metrics.}
 We evaluate model performance using complementary metrics that capture answer
@@ -930,27 +938,20 @@ For downstream reinforcement learning, each prompt group contains 8 rollouts, wi
 We train the policy with a batch size of 64 prompt groups for 160 optimization steps.
 For methods using DAPO dynamic sampling, which keeps only groups with mixed correctness and discards groups that are entirely correct or incorrect, this corresponds to approximately 600 generation batches.
 To accelerate training for these dynamic-sampling methods, we pre-filter the training set by removing questions where all base-model rollouts are already correct.
-Each RL baseline retains its original reward formulation and credit-assignment mechanism, as detailed below:
+Each RL baseline follows its designated paradigm while preserving its original reward formulation and credit-assignment mechanism:
 
 \begin{itemize}[leftmargin=*,itemsep=2pt,topsep=2pt]
-    \item \textbf{Direct RL baselines.} RLVR, RLCR~\citep{damani2026beyond}, CoCA~\citep{li2026confidence}, 
-    and DCPO~\citep{ma2026decoupling} are trained directly from the Qwen3-8B base checkpoint (or its CalibSFT variant). 
-    They follow the unified DAPO training framework while preserving their original correctness rewards, 
-    calibration targets, and credit-assignment formulations.
     
-    \item \textbf{ReDoubt.} Following~\citet{bani2026rewarding}, ReDoubt initializes from the trained RLVR checkpoint 
-    and optimizes its clipped log-score confidence objective. 
-    When combined with CalibSFT, we first fine-tune the RLVR checkpoint with CalibSFT before running ReDoubt RL.
-    
-    \item \textbf{C3RL.} C3RL~\citep{yang2026scaling} integrates correctness, calibration, 
-    and reference-accuracy rewards. It expresses confidence as an integer digit from 0 to 9 (normalized to $[0,1]$ by dividing by 9), 
-    so its corresponding CalibSFT initialization is also trained under this integer format.
-     Based on base-model rollout success rates, questions are categorized as all-correct, partially-correct, 
-     or all-incorrect to provide reference reward signals 
-     (rewarding progress on historically failed questions and penalizing regression on solved ones). 
-     To preserve these signals, we use the full training split for both baseline and CalibSFT-initialized runs
-     without DAPO dynamic sampling.
-     
+    \item \textbf{Joint RL baselines (RLCR, CoCA, DCPO, and C3RL).} 
+        These methods simultaneously optimize answer correctness and confidence rewards starting directly from the base checkpoint ($\text{Base} \rightarrow \text{RL}$), whereas their CalibSFT counterparts initialize from the fine-tuned prior ($\text{Base} \rightarrow \text{CalibSFT} \rightarrow \text{RL}$).
+        For RLCR~\citep{damani2026beyond}, CoCA~\citep{li2026confidence}, and DCPO~\citep{ma2026decoupling}, training uses the default probability format along with DAPO dynamic sampling (which discards prompt groups that are entirely correct or incorrect, pre-filtered for base rollouts).
+        In contrast, C3RL~\citep{yang2026scaling} integrates reference-accuracy rewards using an integer confidence format ($0$--$9$), and its CalibSFT initialization is adapted accordingly.
+        To preserve C3RL's category-dependent reference signals (all-correct, partially-correct, or all-incorrect), we train both the baseline and CalibSFT runs on the full dataset without dynamic sampling.
+        
+    \item \textbf{Two-stage RL baseline (ReDoubt).} 
+        Following~\citet{bani2026rewarding}, ReDoubt decouples accuracy and confidence by optimizing a clipped log-score confidence objective on top of an accuracy-aligned policy ($\text{Base} \rightarrow \text{RLVR} \rightarrow \text{ReDoubt}$). 
+        To seamlessly integrate with this paradigm, we fine-tune the trained RLVR checkpoint with CalibSFT before running ReDoubt RL ($\text{Base} \rightarrow \text{RLVR} \rightarrow \text{CalibSFT} \rightarrow \text{ReDoubt}$).
+        
 \end{itemize}
 
 
