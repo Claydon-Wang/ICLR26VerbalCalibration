@@ -95,9 +95,11 @@ To overcome this exploration bottleneck, we propose \textbf{CalibSFT}, a plug-an
 CalibSFT derives confidence targets from multiple rollouts for each question by combining question-level success rates with response-level correctness, which provably preserves the optimal confidence under any strictly proper scoring rule. 
 To avoid concentrated supervision, CalibSFT applies target-balanced sampling across target values.
 It then introduces correctness-conditional supervision, guiding confidence across all responses while supervising reasoning only on correct ones.
-Across 16 mathematical and general reasoning benchmarks, incorporating CalibSFT consistently reduces calibration errors and improves discrimination for 5 confidence-aware RL algorithms without sacrificing accuracy.
+Across 16 mathematical and general reasoning benchmarks, incorporating CalibSFT systematically mitigates calibration errors and sharpens discrimination across five representative RL algorithms while preserving comparable accuracy.
 Furthermore, CalibSFT delivers practical benefits for downstream selective prediction and model routing.
 \end{abstract}
+
+
 
 % , so that incorrect responses encourage low confidence without reinforcing incorrect solutions.
 % Across 16 mathematical and general reasoning benchmarks, incorporating CalibSFT consistently reduces calibration errors for 5 confidence-aware RL algorithms (e.g., reducing OOD ECE from 32.41\% to 17.31\% for DCPO) and improves confidence discrimination without sacrificing accuracy.
@@ -111,7 +113,7 @@ However, these gains in accuracy do not imply reliable confidence: LRMs often re
 A reliable model should express \emph{calibrated} confidence~\citep{guo2017calibration}, matching its probability of correctness.
 The calibrated confidence indicates when an answer can be trusted, which enables practical applications such as selective prediction~\citep{shen2026provable} and model routing~\citep{hao2026racer}.
 
-Beyond estimates derived from token probabilities, internal representations, or sampling consistency~\citep{luo2026your,srey2026signals,kuhn2023semantic}, 
+Beyond estimates derived from token probabilities, internal representations, or sampling consistency~\citep{luo2025your,srey2026signals,kuhn2023semantic}, 
 models can directly verbalize confidence alongside their answers.
 % Unlike these alternatives that require access to model internals or repeated sampling, verbalized confidence can be obtained in a single black-box generation.
 Unlike these alternatives, verbalized confidence can be obtained in a single black-box generation.
@@ -132,7 +134,6 @@ To avoid concentrated supervision, it employs target-balanced sampling, drawing 
 During fine-tuning, it introduces correctness-conditional supervision, guiding confidence on all responses while restricting reasoning and answer supervision to correct ones, so that incorrect responses encourage low confidence without learning incorrect solutions.
 Since CalibSFT reshapes the confidence prior without altering RL objectives, it can be seamlessly integrated with any confidence-aware RL framework.
 
-
 We evaluate CalibSFT on 16 benchmarks spanning both in-distribution mathematical reasoning and out-of-distribution general reasoning of varying difficulty.
 Across 5 confidence-aware RL methods, initializing with CalibSFT consistently outperforms base-model initialization in both calibration and discrimination without compromising task accuracy (Table~\ref{tab:main_results}).
 % For example, it reduces the out-of-distribution ECE of DCPO from 32.41\% to 17.31\% and improves its AUROC from 68.13\% to 72.75\%.
@@ -142,10 +143,11 @@ Furthermore, CalibSFT provides practical benefits for downstream applications li
 
 Our contributions are summarized as follows:
 \begin{enumerate}[leftmargin=2em,itemsep=1pt,topsep=1pt]
-    \item We identify that base LRMs exhibit a concentrated confidence prior that limits on-policy RL exploration, and theoretically prove that this concentration scales down policy gradients and raises the lower bound on expected Brier risk.
+    \item We identify that base LRMs exhibit a concentrated confidence prior that limits on-policy RL exploration, and theoretically prove that this concentration suppresses policy gradients and hinders calibration by increasing the lower bound on expected Brier risk.
     \item We propose CalibSFT, a supervised fine-tuning stage that constructs confidence targets preserving proper-scoring optimality to shape a well-calibrated prior.
-    \item Extensive evaluations across 16 benchmarks demonstrate that CalibSFT consistently improves calibration and discrimination across 5 confidence-aware RL baselines, while remaining robust across diverse confidence formats, architectures, and downstream applications.
+    \item Extensive evaluations across 16 benchmarks demonstrate that CalibSFT delivers substantial calibration and discrimination gains across all five RL baselines, while exhibiting remarkable robustness across diverse confidence formats, architectures, and downstream applications.
 \end{enumerate}
+
 
 \section{Preliminaries}
 
@@ -620,7 +622,7 @@ These results indicate that the calibration benefit of CalibSFT holds across mod
 In this work, we investigate verbalized overconfidence in large reasoning models and identify that heavily concentrated confidence priors constrain downstream reinforcement learning.
 To break this exploration bottleneck, we propose CalibSFT, a plug-and-play fine-tuning stage that shapes a calibrated confidence prior with broad support before RL.
 By deriving proper-scoring targets from self-sampled rollouts and decoupling confidence from incorrect reasoning supervision, CalibSFT equips the model with a well-balanced initial distribution.
-Empirical results show that CalibSFT consistently improves calibration and discrimination across diverse confidence-aware RL methods without sacrificing task accuracy, enabling more reliable decision-making in reasoning models.
+Empirical results confirm that CalibSFT reliably enhances calibration and discriminative ranking across varied RL methods while preserving core problem-solving capability, providing a sound foundation for trustworthy decision-making in reasoning models.
 
 \subsection*{AI use statement}
 In this work, we used generative AI tools for text polishing, grammar correction, and improving language readability. 
@@ -686,7 +688,7 @@ changes the model that produces it. Rescaling is the standard treatment for
 probability-based signals: a temperature or a bias layer is fitted on a labeled held-out
 set~\citep{guo2017calibration,liu2024litcab}, and label-free variants align the score with
 a reference model or project the two predictive distributions onto a calibrated
-one~\citep{luo2026your,kong2026calibration}. Probes need no separate step, since they are
+one~\citep{luo2025your,kong2026calibration}. Probes need no separate step, since they are
 classifiers already trained on correctness
 labels~\citep{azaria2023internal,srey2026signals}, and a sampling-based estimate is
 calibrated by choosing how agreement among samples maps to a
@@ -1016,7 +1018,7 @@ To examine whether this limitation is universal, we further train Qwen3-8B with 
 As illustrated in Figure~\ref{fig:training_dynamics_calibration}, this calibration-discrimination tension is indeed a shared failure mode across standard confidence-aware RL methods.
 Across all three baselines, optimizing the calibration reward successfully lowers calibration error (e.g., ECE drops from 23.8--25.8\% to 7.8--14.2\%), yet AUROC steadily degrades (falling from 70.8--73.5\% to 64.1--68.0\%).
 Consequently, the policy merely minimizes the aggregate calibration penalty without learning to distinguish correct from incorrect answers.
-In contrast, initializing policy optimization with CalibSFT maintains lower Brier loss and superior AUROC across nearly all training steps, without sacrificing task accuracy.
+In contrast, initializing policy optimization with CalibSFT sustains lower Brier loss and superior AUROC throughout training, leaving task accuracy fully uncompromised.
 
 \paragraph{CalibSFT broadens confidence exploration during RL.}
 Figure~\ref{fig:training_dynamics_support} tracks the corresponding
@@ -1114,7 +1116,7 @@ To examine whether models explore a broader range of confidence values, we evalu
 \input{tables/diversity_metrics.tex}
 
 \paragraph{CalibSFT broadens the confidence distribution.}
-As shown in Table~\ref{tab:diversity_metrics}, CalibSFT consistently broadens the confidence support across all five RL methods and both splits.
+As shown in Table~\ref{tab:diversity_metrics}, CalibSFT universally expands confidence support across all five RL frameworks on both evaluation splits.
 In the baseline RL models, predictions collapse onto a tiny set of values. 
 For instance, the top three values often account for $70\%$ to $90\%$ of all responses, yielding an effective support of fewer than 7 values.
 CalibSFT breaks this concentration: Top-1 and Top-3 shares drop sharply, while both Support Size and Effective Support increase by several times (for example, Effective rises from $7.03$ to $72.83$ for RLCR out-of-distribution).
@@ -1341,7 +1343,7 @@ while provably bounding accuracy loss relative to a full-deferral baseline.
 Selective prediction allows a reasoning model to answer a question only when its confidence is high enough, and abstain otherwise to avoid incorrect answers.
 Specifically, given a threshold $\tau$, the model outputs an answer only if its confidence satisfies $c \ge \tau$.
 Under this setting, \emph{coverage} is the fraction of answered questions, while \emph{selective risk} is the error rate among them.
-The goal is to maximize coverage while keeping selective risk below a given budget $r_{\max}$.
+The goal is to maximize coverage while keeping selective risk below a given budget $r_{\max}$~\citep{huang2025model}.
 We test whether CalibSFT enables models to achieve higher certified coverage under the same risk budget.
 
 To select a valid threshold with finite-sample guarantees, we adopt the Learn-then-Test framework~\citep{angelopoulos2024learn} following \citet{shen2026provable}.
@@ -1353,7 +1355,7 @@ We use one response per calibration question to determine the threshold, and eva
 We repeat this procedure over ten random splits and report the mean and standard deviation of coverage.
 
 \paragraph{CalibSFT increases coverage under a fixed error-rate guarantee.}
-Table~\ref{tab:risk_control} shows that CalibSFT initialization consistently increases certified coverage across all five confidence-aware RL methods under the same risk budgets.
+Table~\ref{tab:risk_control} shows that CalibSFT initialization substantially boosts certified coverage across all evaluated RL algorithms under identical risk budgets.
 On ID benchmarks at a $10\%$ risk budget, CalibSFT raises RLCR's coverage from $31.4\%$ to $62.6\%$, and enables CoCA and C3RL to reach $52.3\%$ and $49.2\%$ coverage, respectively, compared with zero coverage for both baselines.
 On OOD benchmarks at a $20\%$ risk budget, all five baselines yield zero certified coverage, whereas CalibSFT achieves coverage ranging from $16.8\%$ to $22.8\%$.
 Figure~\ref{fig:risk_control} further illustrates that CalibSFT consistently brings certified coverage closer to the perfect-ranking reference across a wide range of risk budgets, especially under stricter risk constraints.
@@ -1371,7 +1373,7 @@ more expensive model. The local model first generates an answer and a
 confidence score for every question. Its answer is retained when the
 confidence is at least a threshold $\tau$; otherwise, the question is
 sent to Qwen3.7-Flash. Following work on efficient reasoning and risk-aware
-routing~\citep{yu2026anytime,zeng2025provable,hao2026racer}, we aim to
+routing~\citep{yu2026anytime,zeng2026on,hao2026racer}, we aim to
 reduce reliance on the stronger model while keeping the accuracy loss
 relative to deferring all questions below a tolerance $\varepsilon$.
 We measure cost using the fraction of questions deferred and the
@@ -1385,31 +1387,12 @@ Following \S\ref{sec:selective_risk_control}, we compute one-sided Clopper--Pear
 In our experiments, the local Qwen3-8B is instantiated by each RL policy, while the stronger model is Qwen3.7-Flash.
 We evaluate on 4{,}828 questions from eight ID mathematics benchmarks using one rollout per question from each model, randomly splitting the questions into equal calibration and test sets across ten independent trials to report the mean results along with the standard deviation of the deferral rate.
 
-Table~\ref{tab:cascade} shows that CalibSFT reduces deferral rates
-across all four evaluated RL methods at both accuracy-loss tolerances.
-At $\varepsilon=1\%$ and $2\%$, the average reductions are $12.3$
-and $25.2$ percentage points, respectively.
-At $\varepsilon=2\%$, CalibSFT reduces CoCA's deferral rate from
-$98.7\%$ to $51.2\%$ and DCPO's from $82.9\%$ to $33.3\%$.
-The corresponding savings in Qwen3.7-Flash tokens increase from
-$0.6\%$ to $33.1\%$ and from $5.6\%$ to $43.5\%$.
-Across both tolerances, routing with CalibSFT achieves accuracies
-between $82.42\%$ and $82.81\%$, compared with $82.58\%$ when
-all questions are deferred. These results show that CalibSFT
-reduces stronger-model usage while maintaining accuracy close
-to the full-deferral baseline.
-
-
 
 \paragraph{CalibSFT improves routing efficiency under an accuracy-loss guarantee.}
-Table~\ref{tab:cascade} shows that CalibSFT initialization consistently 
-lowers deferral rates across all evaluated RL methods at both accuracy-loss tolerances.
-Across these baselines, CalibSFT achieves an average deferral reduction of $12.3\%$ at $\varepsilon=1\%$ and $25.2\%$ percentage points at $\varepsilon=2\%$.
-In particular, at $\varepsilon=2\%$, CalibSFT cuts DCPO's deferral rate from $82.9\%$ to $33.3\%$  and boosting token savings from $5.6\%$ to $43.5\%$.
-Across both tolerances, routing with CalibSFT maintains overall accuracies between $82.42\%$ and $82.81\%$.
-By mitigating confidence concentration on incorrect responses, CalibSFT enables the local model to retain more valid solutions, substantially reducing computational overhead in cascaded reasoning without sacrificing accuracy.
-
-
-
+Table~\ref{tab:cascade} shows that CalibSFT initialization consistently lowers deferral rates across all evaluated RL methods under both accuracy-loss tolerances.
+Across these baselines, CalibSFT achieves an average deferral reduction of $12.3$ and $25.2$ percentage points at $\varepsilon=1\%$ and $\varepsilon=2\%$, respectively.
+In particular, at $\varepsilon=2\%$, CalibSFT cuts DCPO's deferral rate from $82.9\%$ to $33.3\%$, thereby boosting token savings from $5.6\%$ to $43.5\%$.
+Across both tolerances, routing guided by CalibSFT maintains overall accuracies between $82.42\%$ and $82.81\%$, which closely match the full-deferral baseline ($82.58\%$).
+By mitigating confidence concentration on incorrect responses, CalibSFT enables the local model to reliably retain valid solutions, substantially reducing computational overhead in cascaded reasoning without sacrificing accuracy.
 
 \end{document}
