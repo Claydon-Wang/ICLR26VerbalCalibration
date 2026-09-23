@@ -512,6 +512,7 @@ correctness, confidence discrimination, and absolute calibration. We report \tex
 correctness, \textbf{AUROC} for ranking correct responses above incorrect responses, and
 \textbf{Brier score}~\citep{brier1950verification} and
 \textbf{ECE}~\citep{guo2017calibration} for probabilistic calibration.
+We present additional metrics for calibration and confidnece diversity in Appendix~\ref{sec:additional_metrics}.
 
 \paragraph{Implementation details.}
 During evaluation, we use temperature 0.6 and sample 32 responses per problem
@@ -532,7 +533,6 @@ Moreover, these calibration gains come without sacrificing average accuracy. The
 1.20 points in-distribution and 1.49 points out-of-distribution across the five methods.
 We provide detailed per-dataset results in Tables~\ref{tab:appendix_id_results}--\ref{tab:appendix_ood_results} (Appendix~\ref{sec:per_dataset_results}), 
 verify stability across random seeds in Appendix~\ref{sec:seed_stability}.
-Moreover, we evaluate CalibSFT on additional calibration metrics in Appendix~\ref{sec:additional_metrics}.
 Overall, these results establish CalibSFT as a plug-and-play initialization that consistently
 strengthens confidence-aware RL for better calibration.
 
@@ -941,7 +941,7 @@ To accelerate training for these dynamic-sampling methods, we pre-filter the tra
 Each RL baseline follows its designated paradigm while preserving its original reward formulation and credit-assignment mechanism:
 
 \begin{itemize}[leftmargin=*,itemsep=2pt,topsep=2pt]
-    
+
     \item \textbf{Joint RL baselines (RLCR, CoCA, DCPO, and C3RL).} 
         These methods simultaneously optimize answer correctness and confidence rewards starting directly from the base checkpoint ($\text{Base} \rightarrow \text{RL}$), whereas their CalibSFT counterparts initialize from the fine-tuned prior ($\text{Base} \rightarrow \text{CalibSFT} \rightarrow \text{RL}$).
         For RLCR~\citep{damani2026beyond}, CoCA~\citep{li2026confidence}, and DCPO~\citep{ma2026decoupling}, training uses the default probability format along with DAPO dynamic sampling (which discards prompt groups that are entirely correct or incorrect, pre-filtered for base rollouts).
