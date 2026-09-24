@@ -82,7 +82,7 @@ citecolor=mydarkgreen]{hyperref}
 \maketitle
 
 \begin{abstract}
-Large reasoning language models (LRMs) frequently suffer from overconfidence when verbalizing their confidence.
+Large reasoning language models (LRMs) often exhibit overconfidence when expressing their confidence.
 Confidence-aware reinforcement learning (RL) offers a promising way to optimize calibration; however, it relies only on self-sampled responses and is thus constrained by the pre-RL confidence distribution---termed the \emph{confidence prior}. 
 We reveal that off-the-shelf LLMs exhibit a confidence prior heavily concentrated on a few high values, and this concentration persists throughout RL and limits confidence exploration.
 Theoretically, we prove that this concentration restricts policy gradient updates for rarely sampled confidence values and inflates the lower bound on expected Brier risk.
