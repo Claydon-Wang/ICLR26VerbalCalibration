@@ -1,0 +1,18 @@
+\begin{table}[t]
+    \centering
+    \caption{Ablation of target-balanced sampling on DeepScaleR-Eval. Balancing substantially broadens confidence support and prevents concentration at extremes, while maintaining comparable task performance (Pass@1) and calibration.}
+    \label{tab:balance_ablation}
+    \resizebox{\linewidth}{!}{%
+    \begin{tabular}{l c ccc cccc}
+        \toprule
+        & \textbf{Accuracy} & \multicolumn{3}{c}{\textbf{Calibration Metrics}} & \multicolumn{4}{c}{\textbf{Confidence Diversity}} \\
+        \cmidrule(lr){2-2} \cmidrule(lr){3-5} \cmidrule(lr){6-9}
+        Sampling & Pass@1 $\uparrow$ & ECE $\downarrow$ & Brier $\downarrow$ & AUROC $\uparrow$ 
+        & Support $\uparrow$ & Eff. Supp. $\uparrow$ & Top-1 $\downarrow$ & Top-3 $\downarrow$ \\
+        \midrule
+        Balanced   & \textbf{58.50} & \textbf{14.23} & 17.30 & 79.92 & \textbf{85.62} & \textbf{29.86} & \textbf{28.89} & \textbf{47.05} \\
+        Unbalanced & 58.03          & 16.41          & \textbf{16.64} & \textbf{81.74} & 21.75          & 3.33           & 61.57          & 92.25          \\
+        \bottomrule
+    \end{tabular}%
+    }
+\end{table}

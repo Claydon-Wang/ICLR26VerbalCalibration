@@ -17,10 +17,11 @@ Method & P@1 & AUROC & Brier & ECE \\
 
 \begin{table*}[!t]
 \centering
-\caption{Per-dataset results on the in-domain mathematical benchmarks. Base,
-RLVR, and standalone CalibSFT use 6,144 tokens; downstream RL models use
-16,384 tokens. Temperature is 0.6, with four responses per non-AIME question
-and 32 per AIME question.}
+\caption{Per-dataset results on eight in-domain mathematical benchmarks
+spanning a range of difficulty. Each entry reports Pass@1, AUROC, Brier
+score, and ECE. CalibSFT initialization improves calibration and confidence
+discrimination across the reported datasets and RL methods while maintaining
+task accuracy.}
 \label{tab:appendix_id_results}
 \appendixdatasettable{DeepScaleR-Eval}{
 Base & 61.00 & 66.38 & 33.94 & 33.90 \\
@@ -210,8 +211,11 @@ C3RL & 65.62 & 68.36 & 25.44 & 28.06 \\
 
 \begin{table*}[!t]
 \centering
-\caption{Per-dataset results on the out-of-domain benchmarks. The evaluation
-protocol matches Table~\ref{tab:appendix_id_results}.}
+\caption{Per-dataset results on eight out-of-domain general reasoning
+benchmarks spanning a range of difficulty. Each entry reports Pass@1, AUROC,
+Brier score, and ECE. CalibSFT initialization improves calibration and
+confidence discrimination across the reported datasets and RL methods while
+maintaining task accuracy.}
 \label{tab:appendix_ood_results}
 \appendixdatasettable{HotpotQA}{
 Base & 64.68 & \textbf{57.68} & 32.82 & 32.16 \\

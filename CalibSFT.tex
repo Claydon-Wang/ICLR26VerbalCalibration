@@ -251,12 +251,12 @@ To understand this limitation, we examine the confidence prior before RL, traini
 \paragraph{Confidence priors concentrate on a few high values.}
 We refer to the confidence distribution before RL as the model's \emph{confidence prior}.
 To characterize this prior, we sample 10 responses per question on DeepScaleR-Train using
-Qwen3-8B~\citep{yang2025qwen3}, Gemma4-E2B-Instruct~\citep{team2026gemma},
-and OLMo3-7B-Instruct~\citep{olmo2025olmo3}.
+Qwen3-8B~\citep{yang2025qwen3}, Gemma4-E2B~\citep{team2026gemma},
+and OLMo3-7B~\citep{olmo2025olmo3}.
 As shown in Figure~\ref{fig:initial_confidence_prior},
 all models place most of their confidence mass on a few high values, with fewer than 5\% of outputs below 0.5.
 This concentration at high confidence values is also observed among incorrect answers.
-As a result, RL initializes from a concentrated confidence prior and the policy rarely samples low confidence at the
+Consequently, RL initializes from a concentrated confidence prior and the policy rarely samples low confidence at the
 beginning of training.
 
 
@@ -270,72 +270,65 @@ In Appendix~\ref{sec:training_dynamics}, we show that this restricted exploratio
 
 
 To understand why this concentration persists, 
-we formulate verbalized confidence generation as action selection under a softmax policy~\citep{garg2022alternate},
-parameterizing the distribution over candidate confidence values with per-value logits.
-\begin{proposition}[Policy gradients under confidence concentration]
+we formulate verbalized confidence generation as action selection under a softmax policy~\citep{garg2022alternate}, 
+conditioned on the context representation $h = \phi(x, r, a)$ before generating the confidence tokens.
+
+
+
+\begin{proposition}[Policy gradient suppression under concentrated priors]
 \label{prop:confidence_saturation}
-Given a question $x$ and a finite set of confidence actions
-$\{c_1,\ldots,c_K\}\subseteq[0,1]$,
-let $\eta=(\eta_1,\ldots,\eta_K)$ denote the policy's logits for these
-actions and $\pi_i=\Pr(C=c_i\mid x)=\exp(\eta_i)/\sum_{j=1}^K\exp(\eta_j)$.
-Define the fixed expected reward $u_i=-\mathbb E[(c_i-Z)^2\mid x]$.
-Let $J_x(\eta)=\sum_i\pi_i u_i$ and
-$\Delta_x=\max_i u_i-\min_i u_i$. Then
+Given a context $h = \phi(x, r, a)$ and a finite set of confidence actions $\{c_1, \ldots, c_K\} \subseteq [0, 1]$, let $\eta = (\eta_1, \ldots, \eta_K)$ denote the policy logits with $\pi_i = \Pr(C = c_i \mid h) = \exp(\eta_i)/\sum_{j=1}^K\exp(\eta_j)$.
+Define the expected reward $u_i(h) = -\mathbb E[(c_i - Z)^2 \mid h]$.
+Let $J_h(\eta) = \sum_{i=1}^K \pi_i u_i(h)$ and $\Delta_h = \max_i u_i(h) - \min_i u_i(h)$. Then
 \begin{equation}
     \label{eq:logit_gradient}
-    \frac{\partial J_x}{\partial\eta_i}=\pi_i(u_i-J_x),
+    \frac{\partial J_h}{\partial\eta_i} = \pi_i \bigl(u_i(h) - J_h\bigr),
     \qquad
-    \left|\frac{\partial J_x}{\partial\eta_i}\right|
-    \leq\pi_i\Delta_x.
+    \left|\frac{\partial J_h}{\partial\eta_i}\right| \le \pi_i \Delta_h.
 \end{equation}
-If $\pi_k=1-\varepsilon$ for some $k\in\{1,\ldots,K\}$, then
+If $\pi_k = 1 - \varepsilon$ for some $k \in \{1, \ldots, K\}$, then
 \begin{equation}
     \label{eq:logit_gradient_bound}
-    \|\nabla_\eta J_x\|_1\leq 2\varepsilon\Delta_x.
+    \|\nabla_\eta J_h\|_1 \le 2\varepsilon \Delta_h.
 \end{equation}
 \end{proposition}
-Proposition~\ref{prop:confidence_saturation} shows that the logit gradient for any action $c_i$ scales with its sampling probability $\pi_i$, 
-and the total gradient norm is bounded by $2\varepsilon\Delta_x$ under a concentrated prior ($\pi_k=1-\varepsilon$). 
-As $\varepsilon\to 0$, the update for rarely sampled values approaches zero, 
-explaining why on-policy RL struggles to expand confidence support even under calibration rewards. 
+
+
+
+
+Proposition~\ref{prop:confidence_saturation} shows that the logit gradient for any action $c_i$ scales directly with its sampling probability $\pi_i$, consistent with the $\mathcal{O}(\pi_i)$ gradient decay in softmax policies~\citep{mei2020global}.
+Under a concentrated prior ($\pi_k = 1 - \varepsilon$), the total gradient norm is bounded by $2\varepsilon\Delta_h$.
+Crucially, when the dominant action is misaligned with the true likelihood ($c_k \ne p_h$), this suppression prevents policy gradients from escaping the suboptimal initialization, explaining why on-policy RL struggles to correct overconfidence even under calibration rewards.
 We provide the proof in Appendix~\ref{sec:confidence_saturation_proof}.
 
 
-
-
 \paragraph{Persistent confidence concentration hinders downstream calibration.}
-Beyond restricting training exploration, we further find that such narrow
-support undermines calibration at test time. As shown in
-Figure~\ref{fig:rlcr_test_calibration}, across two benchmarks of contrasting
-difficulty (Math500 and MinervaMath), Pass@1 drops sharply by 39.1\%,
-yet mean confidence changes by only 9.7\%. 
-This mismatch suggests that the concentrated confidence distribution does not adequately reflect differences in task difficulty,
-resulting in poor calibration across tasks.
+Beyond restricting training exploration, this concentrated prior misaligns confidence with task difficulty at test time.
+As shown in Figure~\ref{fig:rlcr_test_calibration}, across two benchmarks of contrasting difficulty (Math500 and MinervaMath), Pass@1 drops sharply by 39.1\%, yet mean confidence changes by only 9.7\%.
+Because base models concentrate probability mass primarily on high confidence values, they struggle to assign appropriately lower confidence when encountering hard questions.
 
 
-To theoretically characterize the cost of this miscalibration, we
-analyze the expected Brier loss $\mathbb{E}[(C-Z)^2\mid x]$~\citep{gneiting2007strictly}.
-Let $p_x=\Pr(Z=1\mid x)$.
-Assuming $C$ and $Z$ are conditionally independent given $x$, 
-We establish the following lower bound:
 
-\begin{proposition}[Brier risk under limited confidence support]
+To theoretically characterize the cost of this miscalibration, 
+we analyze the expected Brier loss $\mathbb E[(C-Z)^2 \mid h]$~\citep{gneiting2007strictly}.
+Let $p_h = \Pr(Z = 1 \mid h)$.
+Assuming $C \perp Z \mid h$, we establish the following lower bound:
+
+
+\begin{proposition}[Brier Risk under Prior Misalignment]
 \label{prop:confidence_support}
-For any $\delta>0$, let $m_\delta(x)=\Pr(|C-p_x|<\delta\mid x)$. Then
+For any $\delta > 0$, let $m_\delta(h) = \Pr(|C - p_h| < \delta \mid h)$. Then
 \begin{equation}
     \label{eq:brier_lower_bound}
-    \mathbb E[(C-Z)^2\mid x]
-    \geq p_x(1-p_x)+\delta^2\bigl(1-m_\delta(x)\bigr).
+    \mathbb E[(C-Z)^2 \mid h] \ge p_h(1-p_h) + \delta^2 \bigl(1-m_\delta(h)\bigr).
 \end{equation}
 \end{proposition}
 
 Proposition~\ref{prop:confidence_support} lower-bounds the expected Brier loss 
-by the label variance $p_x(1-p_x)$ and an additional error $\delta^2\bigl(1-m_\delta(x)\bigr)$ from confidence deviations.
-When the policy rarely samples values near $p_x$ (i.e., $m_\delta(x)\approx 0$), this second term approaches $\delta^2$.
-Because confidence-aware RL only updates probabilities over sampled actions, calibration rewards cannot assign probability mass to values near $p_x$ that the policy never explores.
+by the conditional variance $p_h(1-p_h)$ and an excess error $\delta^2\bigl(1-m_\delta(h)\bigr)$ from confidence deviations.
+When the policy rarely samples values near $p_h$ (i.e., $m_\delta(h)\approx 0$), this second term approaches $\delta^2$.
+Because confidence-aware RL only updates probabilities over sampled actions and suppresses gradients on unvisited values (Proposition~\ref{prop:confidence_saturation}), calibration rewards can barely assign probability mass to values near $p_h$ that the policy rarely explores.
 In Appendix~\ref{sec:confidence_support_proof}, we provide the full proof and extend this bound to best-of-$G$ sampling.
-
-
 
 
 \begin{figure}[t]
@@ -391,41 +384,56 @@ confidence target of response $i$ as
     \qquad
     c^{\star}_i=\lambda q_x+(1-\lambda)z_i,
 \end{equation}
-where the mixing weight $\lambda\in[0,1]$ balances the two signals.
-The mixed target is no longer a correctness label, so we examine
-whether it still preserves the same population optimum under a strictly proper
-scoring rule. Let $p_x=\Pr(Z=1\mid x)$ under the base model, and let
-$Z_i$ and $C^{\star}_i$ denote the random counterparts of $z_i$ and
-$c^{\star}_i$ when the $n$ responses are sampled independently. 
+
+where the mixing weight $\lambda\in[0,1]$ balances question-level success rate with response correctness.
+Although $c^{\star}_i$ is no longer a binary label, we show that it still preserves the optimal confidence under any strictly proper scoring rule.
+Let $p_x=\Pr(Z=1\mid x)$, and let $Z_i$ and $C^{\star}_i$ denote the random variables for $z_i$ and $c^{\star}_i$ under independent rollout sampling.
 We then have the following proposition.
+
 \begin{proposition}[Proper-scoring optimum of the mixed target]
 \label{prop:confidence_target_moments}
-Let $\ell(a,z)$ be a strictly proper scoring loss for $z\in\{0,1\}$,
-extended to $t\in[0,1]$ by $\ell(a,t)=t\,\ell(a,1)+(1-t)\,\ell(a,0)$.
-Then $\mathbb E[C^{\star}_i\mid x]=p_x$, and for every $a$ at which
-$\ell$ is finite,
+Let $\ell(a,z)$ be a strictly proper scoring loss for $z\in\{0,1\}$, extended to $t\in[0,1]$ by $\ell(a,t)=t\,\ell(a,1)+(1-t)\,\ell(a,0)$.
+Then $\mathbb E[C^{\star}_i\mid x]=p_x$. Furthermore, for every $a$ at which $\ell$ is finite,
 \begin{equation}
-    \mathbb E[\ell(a,C^{\star}_i)\mid x]=\mathbb E[\ell(a,Z_i)\mid x].
+    \mathbb E[\ell(a,C^{\star}_i)\mid x]=\mathbb E[\ell(a,Z_i)\mid x],
 \end{equation}
+and the expected loss is uniquely minimized at $a^\star = p_x$.
 \end{proposition}
-Proposition~\ref{prop:confidence_target_moments} shows that the mixed
-target has the same expected loss as the correctness label.
-Therefore, under any strictly proper scoring loss $\ell$, the optimal
-prediction remains $p_x$.
+
+Proposition~\ref{prop:confidence_target_moments} guarantees that 
+mixing the group success rate with response correctness preserves the optimal confidence $p_x$ at the question level.
 The number of responses $n$ controls the variance of the success-rate
 estimate, while $\lambda$ controls the degree of response-level
-discrimination within a question. We use $n=50$ and $\lambda=0.5$ by
-default.
-We provide the proof and derive the variance of $C^{\star}_i$ in
+discrimination within a question, separating correct and incorrect responses
+by an expected target margin of $\alpha \triangleq (1-\lambda) + \lambda/n$.
+We use $n=50$ and $\lambda=0.5$ by default (yielding $\alpha \approx 0.51$).
+We provide the proof, variance derivation, and margin analysis in
 Appendix~\ref{sec:confidence_target_proof}.
 
-In practice, we replace each response's confidence with $c^{\star}_i$,
-preserving its reasoning and answer.
-Since the target values are unevenly distributed across the sampled responses,
-training on the raw data would again concentrate supervision on a few
-target values. We therefore apply target-balanced sampling, which draws
-the same number of responses for each target value
-(Appendix~\ref{sec:calibsft_data_details}).
+In practice, we replace each response's confidence with $c^{\star}_i$, preserving its reasoning trace and answer.
+Since the target values are unevenly distributed across raw base model rollouts, 
+training directly on them would concentrate supervision on a few dominant values.
+We therefore apply target-balanced sampling across target intervals 
+to ensure broad support coverage and diversity throughout the confidence space before downstream RL (Appendix~\ref{sec:calibsft_data_details}).
+
+% Proposition~\ref{prop:confidence_target_moments} shows that the mixed
+% target has the same expected loss as the correctness label.
+% Therefore, under any strictly proper scoring loss $\ell$, the optimal
+% prediction remains $p_x$.
+% The number of responses $n$ controls the variance of the success-rate
+% estimate, while $\lambda$ controls the degree of response-level
+% discrimination within a question. We use $n=50$ and $\lambda=0.5$ by
+% default.
+% We provide the proof and derive the variance of $C^{\star}_i$ in
+% Appendix~\ref{sec:confidence_target_proof}.
+
+% In practice, we replace each response's confidence with $c^{\star}_i$,
+% preserving its reasoning and answer.
+% Since the target values are unevenly distributed across the sampled responses,
+% training on the raw data would again concentrate supervision on a few
+% target values. We therefore apply target-balanced sampling, which draws
+% the same number of responses for each target value
+% (Appendix~\ref{sec:calibsft_data_details}).
 
 
 \subsection{Correctness-Conditional Supervision}
@@ -466,7 +474,7 @@ without changing its objective and can integrate with different confidence-aware
 We evaluate CalibSFT across RL methods in Section~\ref{sec:overall_results}, 
 analyze its impact on confidence distributions in Section~\ref{sec:calibration_analysis}, 
 and test its generality across confidence formats and base models in Section~\ref{sec:generality}. 
-Finally, Appendix~\ref{sec:ablation_studies} ablates the target construction, mixing weight $\lambda$, and supervision design. 
+Finally, Section~\ref{sec:ablation_studies} ablates the target construction, mixing weight $\lambda$, and supervision design. 
 
 \section{Experiments}
 
@@ -523,6 +531,8 @@ single node with eight NVIDIA B20Z GPUs.  We report our training details in Appe
 \subsection{Overall Results}
 \label{sec:overall_results}
 
+
+
 \paragraph{CalibSFT consistently benefits diverse confidence-aware RL methods.}
 As shown in Table~\ref{tab:main_results}, initializing RL from CalibSFT
 reduces average Brier score and ECE and increases AUROC across all five confidence-aware RL
@@ -530,7 +540,7 @@ baselines on both mathematical and general-reasoning benchmarks.
 As a concrete example, CalibSFT reduces DCPO's ECE from 29.05 to 8.83 while lifting its
 AUROC from 63.57 to 76.00 on MinervaMath.
 Moreover, these calibration gains come without sacrificing average accuracy. The average Pass@1 improves by
-1.20 points in-distribution and 1.49 points out-of-distribution across the five methods.
+1.20 in-distribution and 1.49 out-of-distribution across the five methods.
 We provide detailed per-dataset results in Tables~\ref{tab:appendix_id_results}--\ref{tab:appendix_ood_results} (Appendix~\ref{sec:per_dataset_results}), 
 verify stability across random seeds in Appendix~\ref{sec:seed_stability}.
 Overall, these results establish CalibSFT as a plug-and-play initialization that consistently
@@ -730,102 +740,98 @@ through supervised fine-tuning before confidence-aware RL.
 
 \subsection{Proof of Proposition~\ref{prop:confidence_saturation}}
 \label{sec:confidence_saturation_proof}
+
 \begin{proof}
-We fix $x$ and the expected rewards $u_i$, and differentiate with respect
-to the confidence logits.
-The softmax derivative is
-$\partial\pi_j/\partial\eta_i=\pi_j(\mathbf 1\{j=i\}-\pi_i)$.
+Fix the context representation $h = \phi(x, r, a)$ and the corresponding expected rewards $u_i(h)$.
+Let $p_h = \Pr(Z = 1 \mid h) \in (0, 1)$ denote the objective conditional probability of correctness given the lossy context representation $h$.
+Since the confidence policy $\pi(\cdot \mid h)$ depends solely on $h$, we have $C \perp Z \mid h$.
+Expanding the squared error gives:
+\begin{equation}
+    u_i(h) = -\mathbb E[(c_i - Z)^2 \mid h] = -\left[ p_h(1 - p_h) + (c_i - p_h)^2 \right].
+\end{equation}
+Differentiating $J_h(\eta) = \sum_{j=1}^K \pi_j u_j(h)$ with respect to logit $\eta_i$, the softmax derivative yields $\partial \pi_j / \partial \eta_i = \pi_j (\mathbf 1\{j = i\} - \pi_i)$.
 It follows that
 \begin{align}
-    \frac{\partial J_x}{\partial\eta_i}
-    &=\sum_j u_j\pi_j(\mathbf 1\{j=i\}-\pi_i) \\
-    &=\pi_i(u_i-J_x).
+    \frac{\partial J_h}{\partial\eta_i}
+    &= \sum_{j=1}^K u_j(h) \pi_j (\mathbf 1\{j = i\} - \pi_i) \\
+    &= \pi_i u_i(h) - \pi_i \sum_{j=1}^K \pi_j u_j(h) \\
+    &= \pi_i \bigl(u_i(h) - J_h\bigr).
 \end{align}
-Since $J_x$ is a convex combination of the $u_i$ values,
-$|u_i-J_x|\leq\Delta_x$, which gives the coordinate-wise bound.
-If $\pi_k=1-\varepsilon$, then
+Since $J_h$ is a convex combination of $\{u_j(h)\}_{j=1}^K$, we have $\min_j u_j(h) \le J_h \le \max_j u_j(h)$, which implies $|u_i(h) - J_h| \le \Delta_h$.
+This gives the coordinate-wise bound:
 \begin{equation}
-    |u_k-J_x|
-    =\left|\sum_{i\ne k}\pi_i(u_k-u_i)\right|
-    \leq\varepsilon\Delta_x.
+    \left|\frac{\partial J_h}{\partial\eta_i}\right| \le \pi_i \Delta_h.
 \end{equation}
-Consequently,
+If the policy concentrates on action $k$ such that $\pi_k = 1 - \varepsilon$, then
+\begin{equation}
+    |u_k(h) - J_h| = \left| \sum_{i \ne k} \pi_i \bigl(u_k(h) - u_i(h)\bigr) \right| \le \sum_{i \ne k} \pi_i \Delta_h = \varepsilon \Delta_h.
+\end{equation}
+Consequently, the $L_1$ norm of the gradient satisfies:
 \begin{align}
-    \|\nabla_\eta J_x\|_1
-    &=\pi_k|u_k-J_x|+\sum_{i\ne k}\pi_i|u_i-J_x| \\
-    &\leq(1-\varepsilon)\varepsilon\Delta_x
-      +\varepsilon\Delta_x \\
-    &\leq 2\varepsilon\Delta_x.
+    \|\nabla_\eta J_h\|_1
+    &= \pi_k |u_k(h) - J_h| + \sum_{i \ne k} \pi_i |u_i(h) - J_h| \\
+    &\le (1 - \varepsilon)\varepsilon \Delta_h + \varepsilon \Delta_h \\
+    &\le 2\varepsilon \Delta_h.
 \end{align}
 \end{proof}
-The gradient is the expectation of the likelihood-ratio estimator
-$U\nabla_\eta\log\pi_I$, where $I\sim\pi$ and
-$U=-(c_I-Z)^2$, with $Z$ drawn from its fixed conditional distribution
-given $x$, independently of $I$.
-This matches RLCR's reward $Z-(c_I-Z)^2$ (Preliminaries) up to the
-term $Z$, which does not depend on $c_I$. 
-Assuming $C\perp Z\mid x$
-as in Proposition~\ref{prop:confidence_support}, this term
-contributes an $\eta$-independent additive constant to $J_x$ that
-does not affect this gradient.
-A baseline depending only on $x$ leaves this expectation unchanged.
+
+The gradient is the expectation of the likelihood-ratio estimator $U \nabla_\eta \log \pi(I \mid h)$, where $I \sim \pi(\cdot \mid h)$ and $U = -(c_I - Z)^2$.
+In practical algorithms such as RLCR, the total reward is $Z - (c_I - Z)^2$.
+Under $C \perp Z \mid h$, the label term $Z$ has conditional expectation $\mathbb E[Z \mid h] = p_h$, which does not depend on $\eta$ and contributes zero gradient.
+Subtracting any state-dependent baseline $b(h)$ that is independent of rollout $I$ strictly preserves this gradient expectation. In empirical GRPO with group size $G$, advantage normalization preserves the gradient update direction up to a positive scaling factor, ensuring that the suppression bound holds up to proportional scaling.
 
 \subsection{Proof of Proposition~\ref{prop:confidence_support}}
 \label{sec:confidence_support_proof}
+
 \begin{proof}
-Writing $C-Z=(C-p_x)-(Z-p_x)$, conditional independence gives $\mathbb E[(C-p_x)(Z-p_x)\mid x]=0$.
-Expanding the square therefore yields
+Recall that $h = \phi(x, r, a)$ denotes the lossy context representation before generating confidence tokens, and $p_h = \Pr(Z = 1 \mid h) \in (0, 1)$ is the objective conditional probability of correctness given $h$.
+Because the policy generates confidence based solely on the context representation $h$ prior to answer verification, $C$ and $Z$ are conditionally independent given $h$, i.e., $C \perp Z \mid h$.
+
+Decomposing the error into $C - Z = (C - p_h) - (Z - p_h)$, conditional independence yields:
+\begin{equation}
+    \mathbb E[(C - p_h)(Z - p_h) \mid h] = \mathbb E[C - p_h \mid h] \cdot \mathbb E[Z - p_h \mid h] = 0,
+\end{equation}
+since $\mathbb E[Z \mid h] = p_h$. Expanding the squared error therefore gives:
 \begin{align}
-    \mathbb E[(C-Z)^2\mid x]
-    &=\mathbb E[(Z-p_x)^2\mid x]
-      +\mathbb E[(C-p_x)^2\mid x] \\
-    &=p_x(1-p_x)+\mathbb E[(C-p_x)^2\mid x].
+    \mathbb E[(C - Z)^2 \mid h]
+    &= \mathbb E[(Z - p_h)^2 \mid h] + \mathbb E[(C - p_h)^2 \mid h] \\
+    &= p_h(1 - p_h) + \mathbb E[(C - p_h)^2 \mid h].
 \end{align}
-For any $\delta>0$, the second term satisfies
+For any $\delta > 0$, the second term satisfies:
 \begin{align}
-    \mathbb E[(C-Z)^2\mid x]-p_x(1-p_x)
-    &=\mathbb E[(C-p_x)^2\mid x] \\
-    &\geq\delta^2\Pr(|C-p_x|\geq\delta\mid x) \\
-    &=\delta^2(1-m_\delta(x)).
+    \mathbb E[(C - p_h)^2 \mid h]
+    &\ge \mathbb E\bigl[(C - p_h)^2 \cdot \mathbf 1\{|C - p_h| \ge \delta\} \mid h\bigr] \\
+    &\ge \delta^2 \Pr(|C - p_h| \ge \delta \mid h) \\
+    &= \delta^2 \bigl(1 - m_\delta(h)\bigr),
 \end{align}
-Thus, assigning little probability mass near $p_x$ incurs excess Brier
-loss even when confidence values in that neighborhood remain possible.
+where $m_\delta(h) = \Pr(|C - p_h| < \delta \mid h)$. Substituting this back into the equality yields:
+\begin{equation}
+    \mathbb E[(C - Z)^2 \mid h] \ge p_h(1 - p_h) + \delta^2 \bigl(1 - m_\delta(h)\bigr).
+\end{equation}
+Thus, assigning little probability mass near $p_h$ incurs an excess Brier loss even when confidence values in that neighborhood remain possible.
 \end{proof}
 
 \paragraph{Restricted confidence support.}
-As a special case, suppose $\Pr(C\in S_x\mid x)=1$ for a nonempty
-set $S_x\subseteq[0,1]$, and define
-$d_x=\operatorname{dist}(p_x,S_x)=\inf_{c\in S_x}|c-p_x|$.
-If $d_x>0$, then $m_{d_x}(x)=0$, and
-Proposition~\ref{prop:confidence_support} with $\delta=d_x$ gives
+As a special case, suppose $\Pr(C \in S_h \mid h) = 1$ for a nonempty set $S_h \subseteq [0, 1]$, and define $d_h = \operatorname{dist}(p_h, S_h) = \inf_{c \in S_h} |c - p_h|$.
+If $d_h > 0$, then $m_{d_h}(h) = 0$, and Proposition~\ref{prop:confidence_support} with $\delta = d_h$ gives:
 \begin{equation}
-    \mathbb E[(C-Z)^2\mid x]
-    \geq p_x(1-p_x)+\operatorname{dist}(p_x,S_x)^2.
+    \mathbb E[(C - Z)^2 \mid h] \ge p_h(1 - p_h) + \operatorname{dist}(p_h, S_h)^2.
 \end{equation}
-For $d_x=0$, the same bound follows directly from the decomposition above.
-If $S_x$ is closed, a predictor that always outputs a nearest point in
-$S_x$ attains the bound.
-Confidence values are effectively drawn from a small discrete set
-throughout this paper (Figure~\ref{fig:initial_confidence_prior}), so
-$\operatorname{dist}(p_x,S_x)$ measures how far the nearest available
-value falls from $p_x$, translating the observed concentration
-directly into excess Brier risk.
+For $d_h = 0$, the same bound follows directly from the decomposition above.
+If $S_h$ is closed, a predictor that always outputs a nearest point in $S_h$ attains the bound.
+When verbalized confidence values concentrate on a small discrete set of high values (Figure~\ref{fig:initial_confidence_prior}), $\operatorname{dist}(p_h, S_h)$ measures the distance from the nearest available value to the true posterior $p_h$, directly translating the concentrated prior into excess Brier risk.
 
 \paragraph{Best-of-$G$ sampling under a concentrated policy.}
-Given the policy and a question $x$, draw $G$ independent
-confidence samples $C_1,\ldots,C_G$ from its conditional distribution.
-Each sample lies outside $\{c:|c-p_x|<\delta\}$ with probability
-$1-m_\delta(x)$, and by independence all $G$ samples do so with
-probability $(1-m_\delta(x))^G$. On that event, even the sample closest
-to $p_x$ has squared error at least $\delta^2$, so
+Given the context representation $h$, draw $G$ independent confidence samples $C_1, \ldots, C_G$ from $\pi(\cdot \mid h)$.
+Each sample lies outside $\{c : |c - p_h| < \delta\}$ with probability $1 - m_\delta(h)$.
+By conditional independence, all $G$ samples do so with probability $\bigl(1 - m_\delta(h)\bigr)^G$.
+On that event, even the sample closest to $p_h$ has squared error at least $\delta^2$, yielding:
 \begin{equation}
-    \mathbb E\!\left[\min_{i\leq G}(C_i-p_x)^2\mid x\right]
-    \geq\delta^2(1-m_\delta(x))^G.
+    \mathbb E\!\left[\min_{i \le G} (C_i - p_h)^2 \,\middle|\, h\right] \ge \delta^2 \bigl(1 - m_\delta(h)\bigr)^G.
 \end{equation}
+With the group size $G = 8$ used in on-policy RL runs, the probability that the group contains a confidence value within $\delta$ of $p_h$ is $1 - \bigl(1 - m_\delta(h)\bigr)^8$.
+When $m_\delta(h) \approx 0$ on difficult instances, group sampling still fails to explore valid values near $p_h$.
 
-With the group size $G=8$ used in our RL runs, the probability that
-the group contains a confidence value within $\delta$ of $p_x$ is
-$1-(1-m_\delta(x))^8$.
 
 \subsection{Proof of Proposition~\ref{prop:confidence_target_moments}}
 \label{sec:confidence_target_proof}
@@ -877,26 +883,109 @@ at $\lambda=1$, it is the group average with variance $v_x/n$.
 For a fixed $\lambda<1$, the variance approaches $(1-\lambda)^2v_x$ as
 $n$ increases, reflecting the retained contribution of the individual
 outcome.
-Within any observed group,
-$C^{\star}_i-C^{\star}_j=(1-\lambda)(Z_i-Z_j)$, so the targets of a
-correct and an incorrect response differ by $1-\lambda$.
+Within any observed group, $C^{\star}_i-C^{\star}_j=(1-\lambda)(Z_i-Z_j)$.
+Taking expectation over the rollouts, the target difference between correct ($Z_i=1$) and incorrect ($Z_i=0$) responses to question $x$ is:
+\begin{equation}
+    \mathbb E[C^{\star}_i\mid Z_i=1, x] - \mathbb E[C^{\star}_i\mid Z_i=0, x] = 1 - \lambda + \frac{\lambda}{n} \equiv \alpha.
+\end{equation}
+At $\lambda=1$, this expected margin shrinks to $1/n$, which collapses within-question discrimination as $n$ grows.
+At our default setting $\lambda=0.5$ and $n=50$, $\alpha \approx 0.51$, which preserves a substantial separation margin while reducing target variance by over $73\%$ compared to binary labels (from $v_x$ to approximately $0.265 v_x$).
 
 \paragraph{Conditioning on the generated response.}
 Proposition~\ref{prop:confidence_target_moments} concerns the success probability $p_x$ before observing
 a particular response. To make the effect of conditioning explicit, let
-$h_i$ include $x$ and information from response $i$, and define
+$h_i = \phi(x, r_i, a_i)$ denote the context representation of response $i$, and define
 $p_{h_i}=\Pr(Z_i=1\mid h_i)$.
-If the other responses are independent of $h_i$ conditional on $x$, then
+If the other rollouts are independent of $h_i$ conditional on $x$, then
 \begin{equation}
     \mathbb E[C^{\star}_i\mid h_i]
     =\left(1-\lambda+\frac{\lambda}{n}\right)p_{h_i}
-     +\lambda\left(1-\frac{1}{n}\right)p_x.
+     +\lambda\left(1-\frac{1}{n}\right)p_x
+    = \alpha p_{h_i} + (1-\alpha)p_x.
 \end{equation}
-The target thus shrinks the response-conditional probability toward the
-question's success probability. These results justify the mean and
-variance of this supervision signal under the original sampling distribution;
-it does not establish response-conditional calibration after target balancing
-and token-level SFT. Those effects are evaluated empirically.
+Under a strictly proper scoring loss, the population optimal prediction function conditioned on $h_i$ is $f^\star(h_i) = \mathbb E[C^{\star}_i\mid h_i]$.
+The resulting separation margin between correct and incorrect responses satisfies:
+\begin{equation}
+    \mathbb E[f^\star(h_i)\mid Z_i=1, x] - \mathbb E[f^\star(h_i)\mid Z_i=0, x]
+    = \alpha \left(\mathbb E[p_{h_i}\mid Z_i=1, x] - \mathbb E[p_{h_i}\mid Z_i=0, x]\right).
+\end{equation}
+The mixed target thus shrinks the response-conditional probability toward the
+question's success probability while retaining an $\alpha$ fraction of the within-question separation margin.
+
+% \paragraph{Scope of our theoretical analysis.}
+These results characterize the mean, variance, and separation margin of the supervision signal under the natural rollout distribution.
+In practice, CalibSFT applies target-balanced sampling to enrich support diversity across the confidence range and trains via token-level cross-entropy, where the empirical benefits for calibration and discrimination are validated across benchmarks in Section~\ref{sec:overall_results}.
+
+% \subsection{Proof of Proposition~\ref{prop:confidence_target_moments}}
+% \label{sec:confidence_target_proof}
+% We analyze the unrounded targets under the original sampling distribution,
+% before response filtering and target balancing.
+% The random variables $Q_x$ and $C^{\star}_i$ correspond to the observed
+% $q_x$ and $c^{\star}_i$ in Eq.~\ref{eq:calibsft_target}.
+
+% \begin{proof}[Proof of Proposition~\ref{prop:confidence_target_moments}]
+% Fix $x$ and write $v_x=p_x(1-p_x)$.
+% Independent sampling gives
+% \begin{equation}
+%     \mathbb E[Q_x\mid x]=\mathbb E[Z_i\mid x]=p_x,
+%     \qquad \operatorname{Var}(Q_x\mid x)=\frac{v_x}{n}.
+% \end{equation}
+% Since $Z_i$ is included in $Q_x$, their conditional covariance is
+% \begin{equation}
+%     \operatorname{Cov}(Q_x,Z_i\mid x)=\frac{v_x}{n}.
+% \end{equation}
+% Linearity of expectation gives $\mathbb E[C^{\star}_i\mid x]=p_x$.
+% Expanding the variance yields
+% \begin{align}
+%     \operatorname{Var}(C^{\star}_i\mid x)
+%     &=\lambda^2\frac{v_x}{n}+(1-\lambda)^2v_x
+%       +2\lambda(1-\lambda)\frac{v_x}{n} \\
+%     &=v_x\left[\frac{1}{n}
+%       +(1-\lambda)^2\left(1-\frac{1}{n}\right)\right].
+% \end{align}
+% Now fix $a$ at which $\ell$ is finite. Since $\ell(a,t)$ is affine in $t$,
+% unbiasedness gives
+% \begin{equation}
+%     \mathbb E[\ell(a,C^{\star}_i)\mid x]
+%     =p_x\ell(a,1)+(1-p_x)\ell(a,0)
+%     =\mathbb E[\ell(a,Z_i)\mid x].
+% \end{equation}
+% Because $\ell$ is strictly proper, this expected loss is uniquely
+% minimized at $a=p_x$. Thus the mixture, the group average, and an
+% individual correctness label induce the same expected scoring loss for a
+% prediction based on $x$.
+% For the Brier loss $\ell(a,z)=(a-z)^2$, the extension is
+% $\ell(a,t)=(a-t)^2+t(1-t)$, so the squared loss against a soft target
+% has the same minimizer. The same argument applies to the binary
+% logarithmic loss~\citep{gneiting2007strictly}.
+% \end{proof}
+
+% \paragraph{Effect of the response count and mixing weight.}
+% At $\lambda=0$, the target is the binary label with variance $v_x$;
+% at $\lambda=1$, it is the group average with variance $v_x/n$.
+% For a fixed $\lambda<1$, the variance approaches $(1-\lambda)^2v_x$ as
+% $n$ increases, reflecting the retained contribution of the individual
+% outcome.
+% Within any observed group,
+% $C^{\star}_i-C^{\star}_j=(1-\lambda)(Z_i-Z_j)$, so the targets of a
+% correct and an incorrect response differ by $1-\lambda$.
+
+% \paragraph{Conditioning on the generated response.}
+% Proposition~\ref{prop:confidence_target_moments} concerns the success probability $p_x$ before observing
+% a particular response. To make the effect of conditioning explicit, let
+% $h_i$ include $x$ and information from response $i$, and define
+% $p_{h_i}=\Pr(Z_i=1\mid h_i)$.
+% If the other responses are independent of $h_i$ conditional on $x$, then
+% \begin{equation}
+%     \mathbb E[C^{\star}_i\mid h_i]
+%     =\left(1-\lambda+\frac{\lambda}{n}\right)p_{h_i}
+%      +\lambda\left(1-\frac{1}{n}\right)p_x.
+% \end{equation}
+% The target thus shrinks the response-conditional probability toward the
+% question's success probability. These results justify the mean and
+% variance of this supervision signal under the original sampling distribution;
+% it does not establish response-conditional calibration after target balancing
+% and token-level SFT. Those effects are evaluated empirically.
 
 \section{Implementation Details}
 \label{sec:detailed_setup}
@@ -1086,7 +1175,7 @@ All metrics are computed on the same results from the main evaluation.
 
 \paragraph{Fine-grained calibration.}
 To thoroughly evaluate confidence reliability, 
-we consider 4 additional metrics that evaluate overconfidence, question-level calibration, failure prediction, and rank calibration:
+we consider 4 additional metrics that evaluate question-level calibration, failure prediction, and calibration ranking:
 \begin{itemize}
     \item \textbf{Positive Calibration Error (PCE)}~\citep{ma2026decoupling} focuses on overconfidence by restricting ECE to bins where average confidence is higher than accuracy.
 
@@ -1124,11 +1213,11 @@ CalibSFT breaks this concentration: Top-1 and Top-3 shares drop sharply, while b
 Because both Support Size and Effective Support increase together, the model uses many different confidence values regularly, rather than generating a few rare numbers by chance.
 Finally, this broader support is consistent with the improved calibration and exploration observed in Tables~\ref{tab:additional_metrics} and~\ref{tab:confidence_correlation}.
 
+
 \subsection{Ablation Studies}
 \label{sec:ablation_studies}
 
-
-\paragraph{Confidence target construction.}
+\subsubsection{Confidence Target Construction}
 \label{sec:target_construction_setup}
 
 \input{tables/training_target_distribution.tex}
@@ -1172,16 +1261,42 @@ $2\times10^{-6}$. Table~\ref{tab:training_target_distribution} reports the
 proportion of training targets in each of ten equal-width confidence
 intervals across the five methods.
 
-
 \input{tables/target_construction_lambda.tex}
 
-\paragraph{Proper-scoring targets improve target quality and SFT performance.}
-Table~\ref{tab:target_construction} reports the AUROC and Brier score of the constructed targets before SFT, 
-together with the resulting models' average performance on in-distribution mathematical benchmarks after SFT. 
-CalibSFT outperforms all four alternatives on both fronts---achieving a lower Brier score and higher AUROC at construction, 
-which transfers to better downstream performance. These results confirm that grounding target construction in proper scoring rules jointly improves calibration and discrimination.
+\noindent\textbf{Proper-scoring targets preserve both calibration and discrimination.}
+Table~\ref{tab:target_construction} reports the AUROC and Brier score of the constructed targets before SFT (Pre-SFT targets), alongside the resulting models' evaluation performance on in-distribution mathematical benchmarks after SFT (Post-SFT predictions).
+In the pre-SFT phase, the metrics evaluate the theoretical properties and supervision quality of the training targets themselves.
+Prior methods struggle to balance calibration and discrimination during target construction:
+while CSFT utilizes verification signals to estimate question-level accuracy $q_x$, assigning the same target to all responses for a question collapses sample-level discrimination; since each question contributes one correct and one incorrect response with identical targets, it yields an AUROC of 50.00 and a high Brier score (31.67);
+conversely, heuristic targets derived from token probabilities (UaIT), semantic consistency (SaySelf), or LLM judgments (LoVeC) lack grounding in strictly proper scoring rules, leading to miscalibrated scores and high Brier errors.
+In contrast, by combining group success rates with individual response correctness $z_i$, CalibSFT separates correct from incorrect responses by construction at $\lambda=0.5$ (an AUROC of 100.00), while scaling the Brier score of question-level targets by $\lambda^2$ to 7.92.
 
-\paragraph{Target mixing weight.}
+\noindent\textbf{Target-level advantages translate to superior post-SFT performance.}
+These advantages at target construction transfer to the post-SFT models.
+Averaged over eight mathematical benchmarks, the policy fine-tuned with CalibSFT achieves the strongest performance on both metrics.
+Specifically, CalibSFT obtains the highest AUROC of 79.68 and the lowest Brier score of 17.74, outperforming models trained on alternative targets.
+These results confirm that grounding target construction in proper scoring rules yields supervision that improves both calibration and discrimination of the trained model.
+
+\subsubsection{Target-Balanced Sampling}
+
+Our CalibSFT pipeline balances training responses across confidence targets. This step prevents frequent targets (especially $0$ and $1$) from dominating the loss and pushing predicted confidences toward the endpoints. To verify this effect, we compare our balanced model against a baseline trained on the raw, unbalanced responses from the same $k=50$ candidate pool, evaluating both on DeepScaleR-Eval.
+
+\paragraph{Target balancing mitigates concentration at extremes.}
+As shown in Figure~\ref{fig:balance_ablation_confidence} and Table~\ref{tab:balance_ablation}, balancing has little impact on standard calibration error, but significantly improves confidence diversity. Specifically, it drops the mass at the extremes from $75.56\%$ to $14.49\%$ and expands the effective support from $3.33$ to $29.86$. This broader distribution is critical for downstream RL: instead of collapsing into near-binary actions ($0$ or $1$), the policy gains access to a continuous, fine-grained action space for optimization, consistent with our diversity analysis in Table~\ref{tab:diversity_metrics} and format comparisons in Table~\ref{tab:format_calibsft}.
+
+\input{tables/balance_ablation.tex}
+
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=0.78\linewidth]{figures/balance_ablation_confidence.pdf}
+    \caption{Confidence distributions on DeepScaleR-Eval after CalibSFT. Target-balanced sampling prevents probability mass from collapsing to the extremes ($0$ and $1$), fostering a broader distribution.}
+    \label{fig:balance_ablation_confidence}
+\end{figure}
+
+
+
+\subsubsection{Target Mixing Weight}
 We construct confidence targets as
 $c^{\star}_i=\lambda q_x+(1-\lambda)z_i$, where $q_x$ is the group
 success rate and $z_i$ is the correctness of an individual response.
@@ -1196,16 +1311,15 @@ signal; post-SFT AUROC is also lower than at $\lambda=0.5$.
 Equal weighting achieves the highest AUROC and lowest Brier score on ID
 benchmarks among the tested settings, so we use $\lambda=0.5$ as the default.
 
-
 \input{tables/supervision_ablation.tex}
 
-\paragraph{Correctness-conditional supervision.}
+\subsubsection{Correctness-Conditional Supervision}
 To verify the effectiveness of CalibSFT design, we ablate three choices in
 the SFT loss: restricting reasoning and answer supervision to correct
 responses, supervising confidence on all responses, and balancing the
 segment losses. Table~\ref{tab:supervision_ablation} reports the results.
 
-\paragraph{Correctness-conditional supervision improves calibration and discrimination.}
+\noindent\textbf{Correctness-conditional supervision improves calibration and discrimination.}
 Confidence-only supervision leaves Pass@1 far behind the other variants,
 showing that reasoning and answer supervision is necessary for accuracy.
 Without segment balancing, calibration is markedly worse: Full-CE trails
@@ -1303,13 +1417,23 @@ verified by the same automated verifier used in downstream RL.
 Crucially, these rollout responses are collected only once before fine-tuning, 
 whereas RL needs to sample new responses at every optimization step.
 
+CalibSFT relies on a one-time offline rollout stage prior to policy fine-tuning. 
+For $k=50$, we generate 50 responses per training question, requiring approximately 147 GPU-hours in total (roughly 16.4 wall-clock hours on an 8$\times$ NVIDIA B20Z node).
+For a given base model and prompt format, this curated dataset can be reused across all downstream confidence-aware RL methods, avoiding repeated rollout collection. 
+Reducing the rollout budget to $k=10$ lowers the collection cost to approximately 32 GPU-hours (around 4 wall-clock hours), providing a compute-efficient alternative.
+This setting yields probability targets on the grid
+$\{0.00,0.05,\ldots,1.00\}$ and remains effective: the corresponding
+CalibSFT model achieves an AUROC of 79.68 and a Brier score of 17.74 in
+the target-construction experiment (Table~\ref{tab:target_construction}).
+
 \paragraph{CalibSFT requires little fine-tuning time.}
 As shown in Table~\ref{tab:training_cost}, 
 CalibSFT introduces minimal overhead compared to downstream RL. 
 On a single node with 8 NVIDIA B20Z GPUs, each CalibSFT step takes only 0.33 minutes, compared to 4.77 minutes per step for RLCR. 
-Consequently, the entire CalibSFT training phase accounts for merely 6.9\% of the GPU-hours required by RLCR, confirming that CalibSFT achieves substantial calibration gains at negligible additional computational cost.
+Consequently, the CalibSFT fine-tuning stage accounts for merely 6.9\% of the GPU-hours required by RLCR, confirming that CalibSFT achieves substantial calibration gains at negligible additional training cost.
 
 \input{tables/training_cost.tex}
+
 
 \section{Downstream Applications}
 

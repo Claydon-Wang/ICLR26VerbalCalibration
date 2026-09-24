@@ -3,7 +3,7 @@
     \begin{minipage}[t]{0.49\textwidth}
         \vspace{0pt}
         \centering
-        \caption{AUROC and Brier score on five confidence target construction methods on ID mathematical benchmarks. CalibSFT achieves the better AUROC and Brier score in both phases.}
+        \caption{AUROC and Brier score on 5 confidence target construction methods on ID mathematical benchmarks Pre-SFT metrics characterize the constructed targets, whereas Post-SFT metrics compare the fine-tuned models.}
         \label{tab:target_construction}
         \footnotesize
         \setlength{\tabcolsep}{3pt}
@@ -27,9 +27,9 @@
     \begin{minipage}[t]{0.45\textwidth}
         \vspace{0pt}
         \centering
-        \caption{Average calibration performance on eight ID and eight OOD
-    benchmarks across mixing weights. Equal weighting ($\lambda=0.5$) gives the
-    strongest ID performance.}
+        \caption{AUROC and Brier score on eight ID and eight OOD benchmarks across mixing weights. An equal weighting of $\lambda=0.5$ achieves the optimal trade-off, yielding the better AUROC and Brier score.}
+
+
         \label{tab:lambda_ablation}
         \footnotesize
         \setlength{\tabcolsep}{4pt}
