@@ -78,15 +78,15 @@
 linkcolor=mydarkred,
 citecolor=mydarkgreen]{hyperref}
 
-\setlength{\textfloatsep}{9pt}
-\setlength{\intextsep}{9pt}
+\setlength{\textfloatsep}{10pt}
+\setlength{\intextsep}{10pt}
 
 \begin{document}
 
 \maketitle
 
 \begin{abstract}
-Large reasoning models (LRMs) frequently suffer from overconfidence when verbalizing their confidence.
+Large reasoning models (LRMs) often suffer from overconfidence when verbalizing their confidence.
 Confidence-aware reinforcement learning (RL) offers a promising way to optimize calibration. 
 However, it relies on on-policy rollouts and is constrained by the pre-RL confidence distribution---termed the \emph{confidence prior}. 
 We reveal that base LRMs exhibit a confidence prior heavily concentrated on a few high values, and this narrow support persists throughout RL even as the specific values shift.
