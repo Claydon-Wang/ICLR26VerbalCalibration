@@ -78,8 +78,8 @@
 linkcolor=mydarkred,
 citecolor=mydarkgreen]{hyperref}
 
-\setlength{\textfloatsep}{10pt}
-\setlength{\intextsep}{10pt}
+\setlength{\textfloatsep}{9pt}
+\setlength{\intextsep}{9pt}
 
 \begin{document}
 
@@ -176,18 +176,14 @@ After partitioning $N$ responses into $B$ confidence bins $\{\mathcal I_b\}_{b=1
     \left|\operatorname{acc}(\mathcal I_b)-
     \operatorname{conf}(\mathcal I_b)\right|,
 \end{equation}
-where $\operatorname{acc}(\mathcal I_b)$ and
-$\operatorname{conf}(\mathcal I_b)$ are the mean correctness and
-confidence in bin $b$.
-While ECE assesses calibration at the bin level, the \textbf{Brier score}~\citep{brier1950verification} computes response-level squared error, 
+where $\operatorname{acc}(\mathcal I_b)$ and $\operatorname{conf}(\mathcal I_b)$ are the mean correctness and confidence in bin $b$.
+While ECE assesses bin-level calibration, the \textbf{Brier score}~\citep{brier1950verification} computes response-level squared error, 
 $\frac{1}{N}\sum_{j=1}^{N}(c_j-z_j)^2$.
-However, calibration alone does not guarantee discrimination. For example,
-assigning every response a constant confidence equal to the overall
-accuracy yields zero ECE while giving correct and incorrect responses
+However, calibration does not guarantee discrimination. For example,
+assigning constant confidence equal to overall accuracy yields zero ECE while giving correct and incorrect responses
 identical scores~\citep{eusebi2026reading}. 
 We therefore report \textbf{AUROC} to evaluate threshold-agnostic discrimination between correct and incorrect answers.
-To improve confidence quality, confidence-aware RL then integrates calibration penalties directly into its reward formulation.
-
+To improve confidence, confidence-aware RL integrates calibration penalties directly into its reward formulation.
 \subsection{Confidence-aware Reinforcement Learning}
 
 \paragraph{Confidence-aware rewards.}
@@ -249,13 +245,13 @@ To understand this limitation, we examine the confidence prior before RL, traini
 \end{figure}
 
 \paragraph{Confidence priors concentrate on a few high values.}
-We refer to the confidence distribution before RL as the model's \emph{confidence prior}.
+We refer to the confidence distribution before RL as the \emph{confidence prior}.
 To characterize this prior, we sample 10 responses per question on DeepScaleR-Train using
 Qwen3-8B~\citep{yang2025qwen3}, Gemma4-E2B~\citep{team2026gemma},
 and OLMo3-7B~\citep{olmo2025olmo3}.
 As shown in Figure~\ref{fig:initial_confidence_prior},
-all models place most of their confidence mass on a few high values, with fewer than 5\% of outputs below 0.5.
-This concentration at high confidence values is also observed among incorrect answers.
+all models place most of their confidence mass on a few high values, with fewer than 5\% of them below 0.5.
+This concentration at high confidence is also observed among incorrect answers.
 Consequently, RL initializes from a concentrated confidence prior and the policy rarely samples low confidence at the
 beginning of training.
 
@@ -637,10 +633,10 @@ These results indicate that the calibration benefit of CalibSFT holds across mod
 
 \section{Conclusion}
 
-In this work, we investigate verbalized overconfidence in large reasoning models and identify that heavily concentrated confidence priors constrain downstream reinforcement learning.
-To break this exploration bottleneck, we propose CalibSFT, a plug-and-play fine-tuning stage that shapes a calibrated confidence prior with broad support before RL.
-By deriving proper-scoring targets from self-sampled rollouts and decoupling confidence from incorrect reasoning supervision, CalibSFT equips the model with a well-balanced initial distribution.
-Empirical results confirm that CalibSFT reliably enhances calibration and discriminative ranking across varied RL methods while preserving core problem-solving capability, providing a sound foundation for trustworthy decision-making in reasoning models.
+We investigate verbalized overconfidence in large reasoning models, showing that concentrated confidence priors constrain downstream RL.
+To overcome this exploration bottleneck, we propose CalibSFT, a plug-and-play fine-tuning stage that shapes a calibrated prior with broad support before RL.
+By deriving proper-scoring targets from self-sampled rollouts and decoupling confidence from incorrect reasoning supervision, CalibSFT establishes a well-balanced initial distribution.
+Extensive evaluations confirm that CalibSFT consistently improves calibration and discrimination across diverse RL methods without sacrificing accuracy, fostering more trustworthy reasoning models.
 
 \subsection*{AI use statement}
 In this work, we used generative AI tools for text polishing, grammar correction, and improving language readability. 
