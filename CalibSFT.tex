@@ -302,9 +302,6 @@ We provide the proof in Appendix~\ref{sec:confidence_saturation_proof}.
 Beyond restricting training exploration, this concentrated prior misaligns confidence with task difficulty at test time.
 As shown in Figure~\ref{fig:rlcr_test_calibration}, across two benchmarks of contrasting difficulty (Math500 and MinervaMath), Pass@1 drops sharply by 39.1\%, yet mean confidence changes by only 9.7\%.
 Because base models concentrate probability mass primarily on high confidence values, they struggle to assign appropriately lower confidence when encountering hard questions.
-
-
-
 To theoretically characterize the cost of this miscalibration, 
 we analyze the expected Brier loss $\mathbb E[(C-Z)^2 \mid h]$~\citep{gneiting2007strictly}.
 Let $p_h = \Pr(Z = 1 \mid h)$.
@@ -633,10 +630,12 @@ These results indicate that the calibration benefit of CalibSFT holds across mod
 
 \section{Conclusion}
 
-We investigate verbalized overconfidence in large reasoning models, showing that concentrated confidence priors constrain downstream RL.
-To overcome this exploration bottleneck, we propose CalibSFT, a plug-and-play fine-tuning stage that shapes a calibrated prior with broad support before RL.
-By deriving proper-scoring targets from self-sampled rollouts and decoupling confidence from incorrect reasoning supervision, CalibSFT establishes a well-balanced initial distribution.
-Extensive evaluations confirm that CalibSFT consistently improves calibration and discrimination across diverse RL methods without sacrificing accuracy, fostering more trustworthy reasoning models.
+In this work, we address the challenge of verbalized overconfidence in large reasoning models.
+We identify that concentrated confidence priors restrict exploration during confidence-aware RL, 
+and propose CalibSFT to shape a well-calibrated prior with broad support before policy optimization. 
+CalibSFT derives confidence targets from self-sampled rollouts and decouples confidence from incorrect reasoning supervision, theoretically preserving proper-scoring optimality. 
+Experimental results across 16 benchmarks confirm that CalibSFT improves calibration and discrimination across diverse RL frameworks, establishing a foundation for reliable and trustworthy reasoning models.
+
 
 \subsection*{AI use statement}
 In this work, we used generative AI tools for text polishing, grammar correction, and improving language readability. 
