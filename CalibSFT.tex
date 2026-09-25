@@ -87,10 +87,10 @@ citecolor=mydarkgreen]{hyperref}
 \maketitle
 
 \begin{abstract}
-Large reasoning models (LRMs) often suffer from overconfidence when verbalizing their confidence.
+Large reasoning models (LRMs) often suffer from overconfidence when expressing their confidence.
 Confidence-aware reinforcement learning (RL) offers a promising way to optimize calibration. 
 However, it relies on on-policy rollouts and is constrained by the pre-RL confidence distribution---termed the \emph{confidence prior}. 
-We reveal that base LRMs exhibit a confidence prior heavily concentrated on a few high values, and this narrow support persists throughout RL even as the specific values shift.
+We reveal that off-the-shelf LRMs exhibit a confidence prior heavily concentrated on a few high values, and this narrow support persists throughout RL even as the specific values shift.
 Theoretically, we prove that this concentration restricts policy gradient updates for rarely sampled confidence values and inflates the lower bound on expected Brier risk.
 To overcome this exploration bottleneck, we propose \textbf{CalibSFT}, a plug-and-play supervised fine-tuning stage that shapes a calibrated confidence prior with broad support before confidence-aware RL.
 CalibSFT derives confidence targets from multiple rollouts for each question by combining question-level success rates with response-level correctness, which provably preserves the optimal confidence under any strictly proper scoring rule. 
@@ -118,7 +118,7 @@ Beyond estimates derived from token probabilities, internal representations, or 
 models can directly verbalize confidence alongside their answers.
 % Unlike these alternatives that require access to model internals or repeated sampling, verbalized confidence can be obtained in a single black-box generation.
 Unlike these alternatives, verbalized confidence can be obtained in a single black-box generation.
-However, base LRMs typically produce miscalibrated scores that concentrate on a few high values regardless of correctness~\citep{mei2025reasoning,cacioli2026saturation}.
+However, off-the-shelf LRMs typically produce miscalibrated scores that concentrate on a few high values regardless of correctness~\citep{mei2025reasoning,cacioli2026saturation}.
 To address this issue, existing post-training approaches calibrate verbalized confidence via either supervised fine-tuning (SFT) on constructed targets~\citep{xu2024sayself,zhang2026lovec} or reinforcement learning (RL) guided by calibration rewards~\citep{damani2026beyond,ma2026decoupling}.
 
 Among these approaches, confidence-aware RL is particularly promising owing to its superior generalization beyond the training distribution~\citep{chu2025sft}.
@@ -144,13 +144,18 @@ Furthermore, CalibSFT provides practical benefits for downstream applications li
 
 Our contributions are summarized as follows:
 \begin{enumerate}[leftmargin=2em,itemsep=1pt,topsep=1pt]
-    \item We identify that base LRMs exhibit a concentrated confidence prior that limits on-policy RL exploration, and theoretically prove that this concentration suppresses policy gradients and hinders calibration by increasing the lower bound on expected Brier risk.
+    \item We identify that LRMs exhibit a concentrated confidence prior that limits on-policy RL exploration, and theoretically prove that this concentration suppresses policy gradients and hinders calibration by increasing the lower bound on expected Brier risk.
     \item We propose CalibSFT, a supervised fine-tuning stage that constructs confidence targets preserving proper-scoring optimality to shape a well-calibrated prior.
     \item Extensive evaluations across 16 benchmarks demonstrate that CalibSFT delivers substantial calibration and discrimination gains across all five RL baselines, while exhibiting remarkable robustness across diverse confidence formats, architectures, and downstream applications.
 \end{enumerate}
 
 
 \section{Preliminaries}
+In this work, we study the calibration of verbalized numerical confidence in large reasoning language models (LRMs)~\citep{xiong2024can,damani2026beyond}.
+Given a question $x$, an LRM $\pi_\theta$ generates a response $o = (r, a, c)$, where $r$ is a reasoning trace, $a$ is an answer, and $c \in [0, 1]$ is the model's estimated probability that $a$ is correct.
+The model verbalizes $c$ conditioned on the prefix context $h = (x, r, a)$ via $\pi_\theta(c \mid h)$.
+An automated verifier $V$ evaluates the answer against the ground truth to provide a correctness label $z = V(x, a) \in \{0, 1\}$.
+
 
 % In this work, we study the calibration of verbalized numerical confidence in large reasoning language models (LRMs)~\citep{xiong2024can,damani2026beyond}. 
 % Given a question $x$, an LRM $\pi_\theta$ autoregressively generates a response consisting of a reasoning trace $r$, an answer $a$, and a post-answer confidence score $c\in[0,1]$.
@@ -158,21 +163,16 @@ Our contributions are summarized as follows:
 % The model verbalizes confidence conditioned on $h$ via $\pi_\theta(c \mid h)$, yielding the complete response $o=(r,a,c)$.
 % An automated verifier $V$ evaluates the answer string against the ground truth to provide a correctness label $z = V(x,a) \in \{0, 1\}$.
 
-In this work, we study the calibration of verbalized numerical confidence in large reasoning language models (LRMs)~\citep{xiong2024can,damani2026beyond}.
-Given a question $x$, an LRM $\pi_\theta$ generates a response $o = (r, a, c)$, where $r$ is a reasoning trace, $a$ is an answer, and $c \in [0, 1]$ is the model's estimated probability that $a$ is correct.
-The model verbalizes $c$ conditioned on the prefix context $h = (x, r, a)$ via $\pi_\theta(c \mid h)$.
-An automated verifier $V$ evaluates the answer against the ground truth to provide a correctness label $z = V(x, a) \in \{0, 1\}$.
+
 
 \subsection{Calibration Metrics}
 
-To evaluate the quality of the verbalized confidence $c$,  we employ complementary metrics that capture both calibration and discrimination.
- Let $C\in[0,1]$ and $Z\in\{0,1\}$ denote the confidence and correctness random variables, respectively. 
-Confidence is perfectly calibrated if $\Pr(Z=1\mid C)=C$ almost surely, and it is
-discriminative if correct responses show higher confidence than
-incorrect ones. We first use \textbf{Expected Calibration Error
-(ECE)}~\citep{guo2017calibration}
-to measure the deviation from perfect calibration $\mathbb E_C[|\Pr(Z=1\mid C)-C|]$. 
-After partitioning $N$ responses into $B$ confidence bins $\{\mathcal I_b\}_{b=1}^{B}$, we estimate ECE as:
+To evaluate verbalized confidence $c$, we assess both calibration and discrimination.
+Let $C\in[0,1]$ and $Z\in\{0,1\}$ denote confidence and correctness random variables, respectively.
+Confidence is perfectly calibrated if $\Pr(Z=1\mid C)=C$ almost surely, and discriminative if correct responses receive higher confidence than incorrect ones.
+We measure calibration via \textbf{Expected Calibration Error (ECE)}~\citep{guo2017calibration}, defined as $\mathbb E_C[|\Pr(Z=1\mid C)-C|]$.
+Partitioning $N$ responses into $B$ bins $\{\mathcal I_b\}_{b=1}^{B}$, ECE is estimated as:
+
 
 \begin{equation}
     \operatorname{ECE}
@@ -202,9 +202,8 @@ For example, RLCR~\citep{damani2026beyond} adopts the negative Brier loss, yield
 \paragraph{Policy optimization.}
 Confidence-aware RL typically optimizes this reward with Group Relative
 Policy Optimization (GRPO)~\citep{shao2024deepseekmath}. For each
-question, GRPO samples $G$ responses $\{o_i\}_{i=1}^{G}$ from the old
-policy $\pi_{\theta_{\mathrm{old}}}$ and normalizes their rewards
-$R_i=R(o_i)$ within the group to obtain the advantage:
+question, GRPO samples $G$ responses $\{o_i\}_{i=1}^{G}$ from $\pi_{\theta_{\mathrm{old}}}$ and normalizes the group-wise rewards
+$R_i=R(o_i)$ to obtain the advantage:
 \begin{equation}
     \widehat A_i=\frac{R_i-\bar R}{\sigma_R+\epsilon},\qquad
     \bar R=\frac{1}{G}\sum_{j=1}^{G}R_j,\qquad
@@ -223,7 +222,7 @@ $o_i$, $\rho_{i,t}(\theta)=\pi_\theta(o_{i,t}\mid x,o_{i,<t})/
 \pi_{\theta_{\mathrm{old}}}(o_{i,t}\mid x,o_{i,<t})$ is the importance
 ratio, and $\epsilon_{\mathrm{clip}}$ is the clipping parameter.
 Since this optimization operates on-policy, it is naturally bounded by the confidence distribution generated during rollouts.
-This motivates us to further inspect the confidence distribution in base LRMs and throughout RL training.
+This motivates us to further inspect the confidence distribution in the LRMs and throughout RL training.
 
 \section{Motivation}
 \label{sec:motivation}
@@ -300,7 +299,7 @@ As shown in Figure~\ref{fig:rlcr_test_calibration}, across two benchmarks of con
 Because base models concentrate probability mass primarily on high confidence values, they struggle to assign appropriately lower confidence when encountering hard questions.
 To theoretically characterize the cost of this miscalibration, 
 we analyze the expected Brier loss $\mathbb E[(C-Z)^2 \mid h]$~\citep{gneiting2007strictly}.
-Let $p_h = \Pr(Z = 1 \mid h)$.
+Let $p_h = \Pr(Z = 1 \mid h) \in (0, 1)$ denote the posterior probability of correctness given context $h$.
 Assuming $C \perp Z \mid h$, we establish the following lower bound:
 
 \begin{proposition}[Brier risk under prior misalignment]
@@ -315,7 +314,7 @@ For any $\delta > 0$, let $m_\delta(h) = \Pr(|C - p_h| < \delta \mid h)$. Then
 Proposition~\ref{prop:confidence_support} lower-bounds the expected Brier loss 
 by the conditional variance $p_h(1-p_h)$ and an excess error $\delta^2\bigl(1-m_\delta(h)\bigr)$ from confidence deviations.
 When the policy rarely samples values near $p_h$ (i.e., $m_\delta(h)\approx 0$), this second term approaches $\delta^2$.
-Because confidence-aware RL only updates probabilities over sampled actions and suppresses gradients on unvisited values (Proposition~\ref{prop:confidence_saturation}), calibration rewards struggle to allocate probability mass to values near $p_h$ that the policy rarely explores.
+Because confidence-aware RL only updates probabilities over sampled actions and suppresses gradients on rarely sampled values (Proposition~\ref{prop:confidence_saturation}), calibration rewards struggle to allocate probability mass to values near $p_h$ that the policy rarely explores.
 In Appendix~\ref{sec:confidence_support_proof}, we provide the full proof and extend this bound to best-of-$G$ sampling.
 
 
@@ -340,28 +339,35 @@ In Appendix~\ref{sec:confidence_support_proof}, we provide the full proof and ex
 
 \section{Method}
 
-Section~\ref{sec:motivation} showed that confidence concentration
-persists during RL, since rarely sampled confidence values have small
-logit gradients, and that the resulting narrow support hinders
-downstream calibration.
-Our key idea is therefore to shape the confidence prior by supervision, rather than leaving it to exploration.
-We propose CalibSFT, a supervised fine-tuning stage that establishes a well-calibrated confidence prior with broad support before RL. 
-For each question, CalibSFT samples multiple
-responses from the base model and assigns each a confidence
-target that combines the question's success rate with the
-response's own correctness.
-It supervises confidence on all responses, but reasoning and answers
-only on correct ones.
+% Section~\ref{sec:motivation} shows that confidence concentration
+% persists during RL, since rarely sampled confidence values have small
+% logit gradients, and that the resulting narrow support hinders
+% downstream calibration.
+% Our key idea is therefore to shape the confidence prior by supervision, rather than leaving it to exploration.
+% We propose CalibSFT, a supervised fine-tuning stage that establishes a well-calibrated confidence prior with broad support before RL. 
+% For each question, CalibSFT samples multiple
+% responses from the base model and assigns each a confidence
+% target that combines the question's success rate with the
+% response's own correctness.
+% It supervises confidence on all responses, but reasoning and answers
+% only on correct ones.
 
+
+Section~\ref{sec:motivation} shows that confidence concentration persists throughout RL. 
+Since rarely sampled confidence values receive minimal policy gradients, the model cannot effectively explore the confidence space. 
+Instead of relying on on-policy exploration, we propose CalibSFT to shape a well-calibrated confidence prior before policy optimization. 
+First, CalibSFT constructs confidence targets by mixing question-level success rates with response-level correctness. 
+Such a target preserves optimal calibration while supporting within-question discrimination. 
+It then applies target-balanced sampling across target values to ensure broad support across the confidence spectrum. 
+Moreover, CalibSFT supervises confidence on all responses, but restricts reasoning and answer supervision to correct ones. 
+In this way, the model learns to express low confidence on errors without reinforcing incorrect solutions.
 
 \subsection{Proper-Scoring Confidence Targets}
-
-Under any strictly proper scoring rule, the optimal confidence equals the 
-true probability of correctness~\citep{gneiting2007strictly}.
-Since this probability is not observed directly, we estimate it empirically from base model rollouts.
-For each training question $x$, we sample $n$ responses with correctness labels $z_i \in \{0, 1\}$ and empirical success rate $q_x = \frac{1}{n} \sum_{i=1}^n z_i$.
-Using the success rate $q_x$ alone assigns same targets to all responses for question $x$, eliminating within-question discrimination.
-To balance calibrated difficulty estimation with response-level discrimination, we construct the confidence target for response $i$ as:
+Under strictly proper scoring rules, optimal confidence matches the true correctness probability~\citep{gneiting2007strictly}.
+As this probability is not observed directly, we estimate it from base-model rollouts.
+For each question $x$, we sample $n$ responses with correctness $z_i \in \{0, 1\}$ and success rate $q_x = \frac{1}{n} \sum_{i=1}^n z_i$.
+However, $q_x$ alone assigns identical targets to all responses may eliminate within-question discrimination.
+To balance difficulty calibration with response discrimination, we construct the confidence target for response $i$ as:
 
 \begin{equation}
     \label{eq:calibsft_target}
@@ -390,8 +396,8 @@ We provide the proof, variance derivations, and conditioning analysis in Appendi
 
 
 In practice, we replace each response's confidence with $c_i^*$, preserving its reasoning trace and answer.
-Because raw rollouts naturally yield far more high-confidence samples than low-confidence ones, training directly on this skewed pool would cause SFT to reproduce the base model's concentrated prior.
-We therefore apply \emph{target-balanced sampling}, which draws an equal number of responses across discretized target bins (Appendix~\ref{sec:training_pipelines}), establishing a well-supported initial prior before downstream RL.
+Because raw rollouts naturally yield far more high-confidence samples than low-confidence ones, training directly on this imbalanced pool would cause SFT to reproduce the base model's concentrated prior.
+We therefore apply \emph{target-balanced sampling}, which draws an equal number of responses across predefined target intervals (Appendix~\ref{sec:training_pipelines}), establishing a well-supported initial prior before downstream RL.
 % Proposition~\ref{prop:confidence_target_moments} shows that the mixed
 % target has the same expected loss as the correctness label.
 % Therefore, under any strictly proper scoring loss $\ell$, the optimal
@@ -837,11 +843,13 @@ Therefore, the mixed target preserves $p_x$ as the unique population minimizer u
 At $\lambda = 0$, the target reduces to the binary label with maximum variance $v_x$.
 At $\lambda = 1$, the target is the question success rate with minimum variance $v_x / n$, but provides zero within-question discrimination.
 For any $\lambda \in (0, 1)$, the variance is substantially smaller than $v_x$, stabilizing regression targets.
-Furthermore, within any observed rollout group, the target difference between a correct rollout $i$ ($Z_i = 1$) and an incorrect rollout $j$ ($Z_j = 0$) is:
+Within any observed rollout group, because $q_x$ is shared across all responses, the target difference between a correct response $i$ ($z_i = 1$) and an incorrect response $j$ ($z_j = 0$) is exactly:
 \begin{equation}
-    C_i^* - C_j^* = (1 - \lambda) + \frac{\lambda}{n} \equiv \alpha.
+    c_i^* - c_j^* = (1 - \lambda)(z_i - z_j) = 1 - \lambda.
 \end{equation}
-With $n = 50$ and $\lambda = 0.5$, this guarantees an expected separation margin of $\alpha \approx 0.51$, ensuring that the supervisor explicitly penalizes overconfidence on incorrect solutions.
+Furthermore, taking expectation over the rollout sampling, the expected target separation between correct and incorrect responses satisfies $\mathbb E[C_i^* \mid Z_i = 1, x] - \mathbb E[C_i^* \mid Z_i = 0, x] = 1 - \lambda + \frac{\lambda}{n} \equiv \alpha$.
+With $n = 50$ and $\lambda = 0.5$, this guarantees an observed margin of $0.50$ (and an expected margin of $\alpha \approx 0.51$), ensuring that the supervisor explicitly penalizes overconfidence on incorrect solutions while reducing target variance by over $73\%$ compared to binary labels (from $v_x$ to approximately $0.265v_x$).
+
 
 \paragraph{Conditioning on response context and empirical Bayes shrinkage.}
 Proposition~\ref{prop:confidence_target_moments} establishes question-level calibration under generative rollouts.
@@ -853,14 +861,8 @@ Assuming remaining rollouts are conditionally independent of $h_i$ given $x$, th
 \end{equation}
 where $\alpha = 1 - \lambda + \lambda/n$.
 Statistically, Eq.~\eqref{eq:shrinkage_target} acts as an \emph{empirical Bayes shrinkage estimator}: it shrinks the noisy single-sample correctness signal toward the question-level prior $p_x$.
-This shrinkage deliberately Trades a bounded conditional bias for a dramatic variance reduction, mitigating overfitting to erratic rollout errors while preserving the within-question margin $\alpha$.
-
-\paragraph{Role of target-balanced sampling.}
-We clarify the relationship between Proposition~\ref{prop:confidence_target_moments} and the subsequent target-balanced sampling.
-Proposition~\ref{prop:confidence_target_moments} verifies that our construction formula $c_i^*$ is mathematically sound and asymptotically unbiased under the generative distribution, ruling out heuristic artifacts.
-However, because base models generate predominantly high-confidence responses, the raw empirical pool is severely left-skewed.
-Target-balanced sampling serves as an explicit prior-shaping intervention: it alters the question selection frequency to provide uniform support over $[0, 1]$, directly breaking the exploration bottleneck proven in Propositions~\ref{prop:confidence_saturation} and~\ref{prop:confidence_support}.
-While rebalancing alters the question marginal distribution, Proposition~\ref{prop:confidence_target_moments} guarantees that within each difficulty slice, the assigned targets remain calibrated estimators of true likelihood.
+This shrinkage deliberately trades a bounded conditional bias for a dramatic variance reduction, mitigating overfitting to erratic rollout errors while preserving the within-question margin $\alpha$.
+These theoretical results characterize the supervision signal under the generative distribution; the empirical effects of subsequent target balancing and autoregressive fine-tuning are evaluated extensively in Section~\ref{sec:overall_results} and Section~\ref{sec:ablation_studies}.
 
 \section{Implementation Details}
 \label{sec:detailed_setup}
