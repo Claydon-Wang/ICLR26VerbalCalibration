@@ -110,7 +110,7 @@ Furthermore, CalibSFT delivers practical benefits for downstream selective predi
 
 Large reasoning models (LRMs) have made substantial progress on complex tasks such as mathematics and coding~\citep{guo2025deepseek,yang2025qwen3}.
 However, these gains in accuracy do not imply reliable confidence: LRMs often remain overconfident in incorrect answers~\citep{mei2025reasoning}.
-A reliable model should express \emph{calibrated} confidence~\citep{guo2017calibration}, matching its probability of correctness.
+A reliable model should express well \emph{calibrated} confidence~\citep{guo2017calibration}, matching its probability of correctness.
 The calibrated confidence indicates when an answer can be trusted, which enables practical applications such as selective prediction~\citep{shen2026provable} and model routing~\citep{hao2026racer}.
 
 Beyond estimates derived from token probabilities, internal representations, or sampling consistency~\citep{luo2025your,srey2026signals,kuhn2023semantic}, 
@@ -151,8 +151,7 @@ Our contributions are summarized as follows:
 
 \section{Preliminaries}
 
-In this work, we study the calibration of verbalized numerical confidence 
-in large reasoning language models (LRMs)~\citep{xiong2024can,damani2026beyond}. 
+In this work, we study the calibration of verbalized numerical confidence in large reasoning language models (LRMs)~\citep{xiong2024can,damani2026beyond}. 
 Given a question $x$, the LRM
 $\pi_\theta$ generates a response $o=(r,a,c)$, where $r$ is a reasoning
 trace, $a$ is an answer, and $c\in[0,1]$ is a post-answer confidence
@@ -241,7 +240,7 @@ To understand this limitation, we examine the confidence prior before RL, traini
 
 \begin{figure}[t]
     \centering
-    \includegraphics[width=\linewidth]{figures/raw_training_confidence_priors_k10.pdf}
+    \includegraphics    [width=\linewidth]{figures/raw_training_confidence_priors_k10.pdf}
     \caption{Confidence distributions from three base models on DeepScaleR-Train.
     Confidence concentrates on a few high values for both correct and
     incorrect responses.}
