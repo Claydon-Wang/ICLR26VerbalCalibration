@@ -1,0 +1,27 @@
+{
+    "latex-workshop.latex.outDir": "%DIR%/build",
+    "latex-workshop.latex.recipes": [
+        {
+            "name": "latexmk (TinyTeX)",
+            "tools": ["latexmk-tinytex"]
+        }
+    ],
+    "latex-workshop.latex.tools": [
+        {
+            "name": "latexmk-tinytex",
+            "command": "/data/shuoyuan_dev/TinyTeX/bin/x86_64-linux/latexmk",
+            "args": [
+                "-synctex=1",
+                "-interaction=nonstopmode",
+                "-file-line-error",
+                "-pdf",
+                "-outdir=%OUTDIR%",
+                "%DOC%"
+            ],
+            "env": {
+                "PATH": "/data/shuoyuan_dev/TinyTeX/bin/x86_64-linux:/usr/local/bin:/usr/bin:/bin"
+            }
+        }
+    ],
+    "latex-workshop.latex.recipe.default": "first"
+}
