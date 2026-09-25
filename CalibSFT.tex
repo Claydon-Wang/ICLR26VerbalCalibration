@@ -111,7 +111,7 @@ Furthermore, CalibSFT delivers practical benefits for downstream selective predi
 
 Large reasoning models (LRMs) have made substantial progress on complex tasks such as mathematics and coding~\citep{guo2025deepseek,yang2025qwen3}.
 However, these gains in accuracy do not imply reliable confidence: LRMs often remain overconfident in incorrect answers~\citep{mei2025reasoning}.
-A reliable model should express \emph{calibrated} confidence~\citep{guo2017calibration}, matching its probability of correctness.
+A reliable model should express \emph{well-calibrated} confidence~\citep{guo2017calibration}, matching its probability of correctness.
 The calibrated confidence indicates when an answer can be trusted, which enables practical applications such as selective prediction~\citep{shen2026provable} and model routing~\citep{hao2026racer}.
 
 Beyond estimates derived from token probabilities, internal representations, or sampling consistency~\citep{luo2025your,srey2026signals,kuhn2023semantic}, 
@@ -158,11 +158,10 @@ Our contributions are summarized as follows:
 % The model verbalizes confidence conditioned on $h$ via $\pi_\theta(c \mid h)$, yielding the complete response $o=(r,a,c)$.
 % An automated verifier $V$ evaluates the answer string against the ground truth to provide a correctness label $z = V(x,a) \in \{0, 1\}$.
 
-In this work, we study the calibration of verbalized numerical confidence in large reasoning language models (LRMs)~\citep{xiong2024can,damani2026beyond}. 
-Given a question $x$, an LRM $\pi_\theta$ generates a response $o = (r, a, c)$, 
-The model verbalizes confidence $c \in [0, 1]$ conditioned on the prefix context $h = (x, r, a)$ via $\pi_\theta(c \mid h)$.
+In this work, we study the calibration of verbalized numerical confidence in large reasoning language models (LRMs)~\citep{xiong2024can,damani2026beyond}.
+Given a question $x$, an LRM $\pi_\theta$ generates a response $o = (r, a, c)$, where $r$ is a reasoning trace, $a$ is an answer, and $c \in [0, 1]$ is the model's estimated probability that $a$ is correct.
+The model verbalizes $c$ conditioned on the prefix context $h = (x, r, a)$ via $\pi_\theta(c \mid h)$.
 An automated verifier $V$ evaluates the answer against the ground truth to provide a correctness label $z = V(x, a) \in \{0, 1\}$.
-
 
 \subsection{Calibration Metrics}
 
