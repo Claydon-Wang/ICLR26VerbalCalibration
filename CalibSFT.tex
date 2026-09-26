@@ -93,7 +93,7 @@ However, it relies on on-policy rollouts and is thus constrained by the model's 
 In this work, we reveal that off-the-shelf LRMs exhibit a confidence prior heavily concentrated on a few high values, which persists throughout RL.
 Theoretically, we prove that this concentration suppresses policy gradient updates for rarely sampled confidence values and inflates the lower bound on expected Brier risk.
 To overcome this exploration bottleneck, we propose \textbf{CalibSFT}, a plug-and-play supervised fine-tuning stage that shapes a calibrated confidence prior with broad support before RL.
-Specifically, CalibSFT constructs confidence targets combining question-level success rates with response-level correctness, which provably preserves proper-scoring optimality, and balances training responses across the confidence spectrum to enable diverse confidence exploration during RL.
+For each question, CalibSFT constructs confidence targets combining its success rate with response-level correctness, which provably preserves proper-scoring optimality, and then balances training responses across the confidence spectrum to enable diverse confidence exploration during RL.
 To learn from incorrect responses without imitating their reasoning, CalibSFT introduces correctness-conditional supervision, guiding confidence across all responses while supervising reasoning only on correct ones.
 Across 16 mathematical and general reasoning benchmarks, incorporating CalibSFT reduces calibration errors and improves discrimination across five representative RL algorithms while preserving comparable accuracy.
 Furthermore, CalibSFT delivers practical benefits for downstream selective prediction and model routing.
