@@ -19,9 +19,9 @@ Method & P@1 & AUROC & Brier & ECE \\
 \centering
 \caption{Per-dataset results on eight in-domain mathematical benchmarks
 spanning a range of difficulty. Each entry reports Pass@1, AUROC, Brier
-score, and ECE. CalibSFT initialization improves calibration and confidence
-discrimination across the reported datasets and RL methods while maintaining
-task accuracy.}
+score, and ECE. CalibSFT initialization improves calibration and discrimination on most
+datasets, with the largest gains on benchmarks where baseline RL is heavily
+overconfident.}
 \label{tab:appendix_id_results}
 \appendixdatasettable{DeepScaleR-Eval}{
 Base & 61.00 & 66.38 & 33.94 & 33.90 \\
@@ -214,8 +214,8 @@ C3RL & 65.62 & 68.36 & 25.44 & 28.06 \\
 \caption{Per-dataset results on eight out-of-domain general reasoning
 benchmarks spanning a range of difficulty. Each entry reports Pass@1, AUROC,
 Brier score, and ECE. CalibSFT initialization improves calibration and
-confidence discrimination across the reported datasets and RL methods while
-maintaining task accuracy.}
+discrimination on most datasets, with the largest gains on benchmarks where
+baseline RL is heavily overconfident.}
 \label{tab:appendix_ood_results}
 \appendixdatasettable{HotpotQA}{
 Base & 64.68 & \textbf{57.68} & 32.82 & 32.16 \\
