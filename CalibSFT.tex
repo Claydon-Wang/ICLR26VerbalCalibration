@@ -331,7 +331,7 @@ In Appendix~\ref{sec:confidence_support_proof}, we provide the full proof and ex
         \centering
         \includegraphics[width=\linewidth]{figures/rlcr_test_calibration_row.pdf}
         \caption{Pass@1 and mean confidence on Math500 and MinervaMath of
-        RLCR on Qwen3-8B. Mean confidence shifts far less than Pass@1 between the two tasks.}
+        RLCR on Qwen3-8B. Mean confidence shifts far less than Pass@1 across tasks.}
         \label{fig:rlcr_test_calibration}
     \end{minipage}
 \end{figure}
@@ -916,6 +916,8 @@ Each RL baseline follows its designated paradigm while preserving its original r
 \end{itemize}
 
 
+\input{tables/format_prompts.tex}
+
 \subsection{Evaluation Protocol}
 For our primary evaluations, we decode at temperature 0.6 and sample 32 responses per question for the AIME benchmarks and 4 responses per question for all other benchmarks.
 Pass@1 is reported as the average answer correctness across these sampled outputs.
@@ -947,24 +949,17 @@ The corresponding prompts for each format are provided in Table~\ref{tab:format_
     \item \textbf{Linguistic:} Categorized into \emph{low} ($c^* < 1/3$), \emph{medium} ($1/3 \le c^* < 2/3$), and \emph{high} ($c^* \ge 2/3$), which are evaluated at fixed values of 0.25, 0.50, and 0.75, respectively.
 \end{itemize}
 
-\input{tables/format_prompts.tex}
 
 \section{Detailed Experimental Results}
 
 
-\begin{figure}[!t]
+\begin{figure}[p]
     \centering
-    \includegraphics[width=\linewidth]{figures/training_dynamics_calibration.pdf}
+    \includegraphics[width=0.85\linewidth]{figures/training_dynamics_calibration.pdf}
     \caption{Training dynamics of RLCR, CoCA, and DCPO with and without CalibSFT initialization. Standard RL improves Brier loss and ECE but degrades AUROC over training. In contrast, CalibSFT consistently achieves markedly better Brier loss, ECE, and AUROC while preserving task accuracy.}
     \label{fig:training_dynamics_calibration}
-\end{figure}
-
-
-
-
-\begin{figure}[tbp]
-    \centering
-    \includegraphics[width=\linewidth]{figures/training_dynamics_support.pdf}
+    \vspace{6pt}
+    \includegraphics[width=0.85\linewidth]{figures/training_dynamics_support.pdf}
     \caption{Confidence exploration dynamics during training across methods. The number of distinct confidence values sampled per question (left axis) closely tracks confidence token entropy (right axis).  In standard RL (top), confidence token entropy remains low, restricting the number of distinct confidence values sampled per question. In contrast, CalibSFT initialization (bottom) substantially elevates token entropy throughout policy optimization, doubling distinct sampled values and enabling active exploration across the confidence spectrum.}
     \label{fig:training_dynamics_support}
 \end{figure}
@@ -1159,12 +1154,6 @@ As shown in Figure~\ref{fig:balance_ablation_confidence} and Table~\ref{tab:bala
 \input{tables/balance_ablation.tex}
 
 
-\begin{figure}[t]
-    \centering
-    \includegraphics[width=0.78\linewidth]{figures/balance_ablation_confidence.pdf}
-    \caption{Confidence distributions on DeepScaleR-Eval after CalibSFT. Target-balanced sampling prevents probability mass from collapsing to the extremes ($0$ and $1$), fostering a broader distribution.}
-    \label{fig:balance_ablation_confidence}
-\end{figure}
 
 
 
@@ -1259,19 +1248,14 @@ Meanwhile, on easier datasets such as MATH-500 where RLCR exhibits underconfiden
 CalibSFT properly raises the confidence scores and reduces ECE from 7.53\% to 3.89\%.
 
 
-\begin{figure}[t]
+\begin{figure}[!tp]
     \centering
     \includegraphics[width=\linewidth]{figures/reliability_id.pdf}
     \caption{Reliability diagrams of RLCR with and without CalibSFT across three in-distribution mathematical benchmarks. 
     CalibSFT effectively reduces both underconfidence on easier tasks (MATH-500) 
     and overconfidence on harder tasks (MinervaMath and AIME 2026), aligning confidence closer to actual accuracy.}
     \label{fig:reliability_id}
-\end{figure}
-
-
-
-\begin{figure}[t]
-    \centering
+    \vspace{8pt}
     \includegraphics[width=\linewidth]{figures/reliability_ood.pdf}
     \caption{Reliability diagrams of RLCR with and without CalibSFT on out-of-distribution reasoning benchmarks. 
     CalibSFT substantially alleviates severe overconfidence across all three tasks and
