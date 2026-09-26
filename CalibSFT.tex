@@ -88,15 +88,14 @@ citecolor=mydarkgreen]{hyperref}
 
 \begin{abstract}
 Large reasoning models (LRMs) often suffer from overconfidence when expressing their uncertainty.
-Confidence-aware reinforcement learning (RL) offers a promising way to optimize calibration. 
-However, it relies on on-policy rollouts and is fundamentally constrained by the pre-RL confidence distribution---termed the \emph{confidence prior}.
-We reveal that off-the-shelf LRMs exhibit a confidence prior heavily concentrated on a few high values, and this narrow support persists throughout RL even as the specific values shift.
-Theoretically, we prove that this concentration restricts policy gradient updates for rarely sampled confidence values and inflates the lower bound on expected Brier risk.
+Confidence-aware reinforcement learning (RL) offers a promising way to optimize calibration.
+However, it relies on on-policy rollouts and is thus constrained by the model's pre-RL confidence distribution, which we term \emph{confidence prior}.
+In this work, we reveal that off-the-shelf LRMs exhibit a confidence prior heavily concentrated on a few high values, which persists throughout RL.
+Theoretically, we prove that this concentration suppresses policy gradient updates for rarely sampled confidence values and inflates the lower bound on expected Brier risk.
 To overcome this exploration bottleneck, we propose \textbf{CalibSFT}, a plug-and-play supervised fine-tuning stage that shapes a calibrated confidence prior with broad support before RL.
-CalibSFT derives confidence targets from multiple rollouts for each question by combining question-level success rates with response-level correctness, which provably preserves the optimal confidence under any strictly proper scoring rule. 
-To avoid concentrated training signals, CalibSFT applies target-balanced sampling across the confidence spectrum.
-It then introduces correctness-conditional supervision, guiding confidence across all responses while supervising reasoning only on correct ones.
-Across 16 mathematical and general reasoning benchmarks, incorporating CalibSFT reduces calibration errors and sharpens discrimination across five representative RL algorithms while preserving comparable accuracy.
+Specifically, CalibSFT constructs confidence targets combining question-level success rates with response-level correctness, which provably preserves proper-scoring optimality, and balances training responses across the confidence spectrum to enable diverse confidence exploration during RL.
+To learn from incorrect responses without imitating their reasoning, CalibSFT introduces correctness-conditional supervision, guiding confidence across all responses while supervising reasoning only on correct ones.
+Across 16 mathematical and general reasoning benchmarks, incorporating CalibSFT reduces calibration errors and improves discrimination across five representative RL algorithms while preserving comparable accuracy.
 Furthermore, CalibSFT delivers practical benefits for downstream selective prediction and model routing.
 \end{abstract}
 
@@ -122,7 +121,7 @@ However, off-the-shelf LRMs typically produce miscalibrated scores that concentr
 To address this issue, existing post-training approaches calibrate verbalized confidence via either supervised fine-tuning (SFT) on constructed targets~\citep{xu2024sayself,zhang2026lovec} or reinforcement learning (RL) guided by calibration rewards~\citep{damani2026beyond,ma2026decoupling}.
 
 Among these approaches, confidence-aware RL is particularly promising owing to its superior generalization beyond the training distribution~\citep{chu2025sft}.
-However, because confidence-aware RL explores via on-policy rollouts, its optimization is fundamentally constrained by the confidence distribution before RL, which we term the \emph{confidence prior}.
+However, because confidence-aware RL explores via on-policy rollouts, its optimization is fundamentally constrained by the confidence distribution before RL, which we term \emph{confidence prior}.
 In practice, this prior concentrates heavily on a narrow set of high values across both correct and incorrect responses (Figure~\ref{fig:initial_confidence_prior}).
 Although calibration rewards explicitly penalize miscalibration, this concentration persists throughout policy optimization and limits the exploration of diverse confidence values (Figure~\ref{fig:rlcr_training_calibration}).
 Our theoretical analysis in Section~\ref{sec:motivation} reveals that the policy gradient for each confidence value scales with its sampling probability, which suppresses updates on rarely sampled values.
@@ -132,7 +131,7 @@ As a result, post-RL confidence fails to reflect task difficulty in practice: me
 To overcome this exploration bottleneck, we propose \textbf{CalibSFT}, a supervised fine-tuning stage that shapes a calibrated confidence prior with broad support before confidence-aware RL.
 Specifically, for each training question, CalibSFT samples multiple responses from the base model and assigns each a confidence target that balances the question-level success rate with response-level correctness.
 We further prove that this mixed target preserves the question-level optimal confidence under any strictly proper scoring rule.
-To avoid concentrated supervision, it employs target-balanced sampling, drawing an equal number of responses across all target confidence values.
+To enable diverse confidence exploration during RL, it employs target-balanced sampling, drawing an equal number of responses for each target value.
 During fine-tuning, it introduces correctness-conditional supervision, guiding confidence on all responses while restricting reasoning and answer supervision to correct ones, so that the model learns low confidence on incorrect responses without imitating their solutions.
 Since CalibSFT reshapes the confidence prior without altering RL objectives, it can be seamlessly integrated with any confidence-aware RL framework.
 
@@ -146,7 +145,7 @@ Furthermore, CalibSFT provides practical benefits for downstream applications li
 Our contributions are summarized as follows:
 \begin{enumerate}[leftmargin=2em,itemsep=1pt,topsep=1pt]
     \item We identify that LRMs exhibit a concentrated confidence prior that limits on-policy RL exploration, and theoretically prove that this concentration suppresses policy gradients and hinders calibration by increasing the lower bound on expected Brier risk.
-    \item We propose CalibSFT, a supervised fine-tuning stage that constructs confidence targets preserving proper-scoring optimality to shape a well-calibrated prior.
+    \item We propose CalibSFT, a supervised fine-tuning stage that constructs proper-scoring confidence targets and balances them across the confidence spectrum to enable RL exploration.
     \item Extensive evaluations across 16 benchmarks demonstrate that CalibSFT delivers substantial calibration and discrimination gains across all five RL baselines, while exhibiting remarkable robustness across diverse confidence formats, architectures, and downstream applications.
 \end{enumerate}
 
@@ -355,7 +354,7 @@ In Appendix~\ref{sec:confidence_support_proof}, we provide the full proof and ex
 Section~\ref{sec:motivation} shows that confidence concentration persists throughout RL, since rarely sampled confidence values receive minimal policy gradients.
 Instead of relying on on-policy exploration, we propose CalibSFT to shape a well-calibrated confidence prior before policy optimization.
 CalibSFT first constructs confidence targets that mix question-level success rates with response-level correctness, preserving each question's optimal confidence while supporting within-question discrimination.
-It then applies target-balanced sampling to broaden support across the confidence spectrum.
+It then applies target-balanced sampling to broaden support across the confidence spectrum, so that RL can explore diverse confidence values.
 Finally, it supervises confidence on all responses but restricts reasoning and answer supervision to correct ones, so that the model learns to express low confidence on errors without reinforcing incorrect solutions.
 
 \subsection{Proper-Scoring Confidence Targets}
