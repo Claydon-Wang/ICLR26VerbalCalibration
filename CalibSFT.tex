@@ -1296,8 +1296,8 @@ Consequently, the CalibSFT fine-tuning stage accounts for merely 6.9\% of the GP
 
 
 Beyond standard calibration and discrimination metrics, 
-we evaluate whether the effectiveness of CalibSFT 
-transfers into practical benefits for downstream decision-making under finite-sample statistical guarantees.
+we evaluate whether CalibSFT's gains 
+transfer into practical benefits for downstream decision-making under finite-sample statistical guarantees.
 We investigate two deployment scenarios:
 (1) \textbf{selective risk control} (\S\ref{sec:selective_risk_control}), 
 which maximizes response coverage while strictly controlling the selective risk (error rate) 
@@ -1326,7 +1326,7 @@ Selective prediction allows a reasoning model to answer a question only when its
 Specifically, given a threshold $\tau$, the model outputs an answer only if its confidence satisfies $c \ge \tau$.
 Under this setting, \emph{coverage} is the fraction of answered questions, while \emph{selective risk} is the error rate among them.
 The goal is to maximize coverage while keeping selective risk below a given budget $r_{\max}$~\citep{huang2025model}.
-We test whether CalibSFT enables models to achieve higher certified coverage under the same risk budget.
+We test whether CalibSFT yields higher certified coverage under the same risk budget.
 
 To select a valid threshold with finite-sample guarantees, we adopt the Learn-then-Test framework~\citep{angelopoulos2024learn} following \citet{shen2026provable}.
 Specifically, over a grid of 101 candidate thresholds in $\{0, 0.01, \ldots, 1\}$, we compute a one-sided Clopper--Pearson upper bound on selective risk~\citep{clopper1934use} at confidence level $1-\delta/101$, with $\delta=0.05$.
@@ -1340,8 +1340,8 @@ We repeat this procedure over ten random splits and report the mean and standard
 Table~\ref{tab:risk_control} shows that CalibSFT initialization substantially boosts certified coverage across all evaluated RL algorithms under identical risk budgets.
 On ID benchmarks at a $10\%$ risk budget, CalibSFT raises RLCR's coverage from $31.4\%$ to $62.6\%$, and enables CoCA and C3RL to reach $52.3\%$ and $49.2\%$ coverage, respectively, compared with zero coverage for both baselines.
 On OOD benchmarks at a $20\%$ risk budget, all five baselines yield zero certified coverage, whereas CalibSFT achieves coverage ranging from $16.8\%$ to $22.8\%$.
-Figure~\ref{fig:risk_control} further illustrates that CalibSFT consistently brings certified coverage closer to the perfect-ranking reference across a wide range of risk budgets, especially under stricter risk constraints.
-These results indicate that mitigating confidence concentration is important for risk-controlled deployment, allowing the model to certify substantially more responses rather than conservatively abstaining.
+Figure~\ref{fig:risk_control} further illustrates that CalibSFT consistently brings certified coverage closer to the perfect-ranking reference across risk budgets, especially under stricter risk constraints.
+These results indicate that mitigating confidence concentration is important for risk-controlled deployment, allowing the model to certify more responses rather than conservatively abstaining.
 
 
 \input{tables/cascade.tex}
