@@ -956,7 +956,7 @@ The corresponding prompts for each format are provided in Table~\ref{tab:format_
 \begin{figure}[p]
     \centering
     \includegraphics[width=0.85\linewidth]{figures/training_dynamics_calibration.pdf}
-    \caption{Training dynamics of RLCR, CoCA, and DCPO with and without CalibSFT initialization. Standard RL improves Brier loss and ECE but degrades AUROC over training. In contrast, CalibSFT consistently achieves markedly better Brier loss, ECE, and AUROC while preserving task accuracy.}
+    \caption{Training dynamics of RLCR, CoCA, and DCPO with and without CalibSFT initialization. Standard RL improves Brier score and ECE but degrades AUROC over training. In contrast, CalibSFT consistently achieves markedly better Brier score, ECE, and AUROC while preserving task accuracy.}
     \label{fig:training_dynamics_calibration}
     \vspace{6pt}
     \includegraphics[width=0.85\linewidth]{figures/training_dynamics_support.pdf}
@@ -974,7 +974,7 @@ To examine whether this limitation is universal, we further train Qwen3-8B with 
 As illustrated in Figure~\ref{fig:training_dynamics_calibration}, this calibration-discrimination tension is indeed a shared failure mode across standard confidence-aware RL methods.
 Across all three baselines, optimizing the calibration reward successfully lowers calibration error (e.g., ECE drops from 23.8--25.8\% to 7.8--14.2\%), yet AUROC steadily degrades (falling from 70.8--73.5\% to 64.1--68.0\%).
 Consequently, the policy merely minimizes the aggregate calibration penalty without learning to distinguish correct from incorrect answers.
-In contrast, initializing policy optimization with CalibSFT sustains lower Brier loss and superior AUROC throughout training while preserving task accuracy.
+In contrast, initializing policy optimization with CalibSFT sustains lower Brier score and superior AUROC throughout training while preserving task accuracy.
 
 \paragraph{CalibSFT broadens confidence exploration during RL.}
 Figure~\ref{fig:training_dynamics_support} tracks the corresponding
